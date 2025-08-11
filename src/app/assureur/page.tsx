@@ -138,18 +138,18 @@ export default function InsurerDashboard() {
   }
 
   const itemVariants = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       y: 20,
       scale: 0.95
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }
     }
   }
@@ -186,8 +186,8 @@ export default function InsurerDashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8" variants={itemVariants}>
+        {/* Stats Cards - Responsive */}
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8" variants={itemVariants}>
           <Card className="border-0 shadow-lg bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Offres</CardTitle>
@@ -199,7 +199,7 @@ export default function InsurerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-white">
+          <Card className="border-0 shadow-lg bg-white min-w-0">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Offres actives</CardTitle>
               <Target className="h-4 w-4 text-green-600" />
@@ -210,7 +210,9 @@ export default function InsurerDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-white">
+          <Card className="border-0 shadow-lg bg-white overflow-x-auto">
+            <div className="min-w-[600px] sm:min-w-0">
+            </div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Devis</CardTitle>
               <Users className="h-4 w-4 text-purple-600" />
@@ -249,7 +251,7 @@ export default function InsurerDashboard() {
         {/* Main Content */}
         <motion.div variants={itemVariants}>
           <Tabs defaultValue="offers" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2">
               <TabsTrigger value="offers">Mes offres</TabsTrigger>
               <TabsTrigger value="quotes">Devis reçus</TabsTrigger>
             </TabsList>

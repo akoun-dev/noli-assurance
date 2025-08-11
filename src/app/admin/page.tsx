@@ -171,8 +171,8 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" variants={itemVariants}>
+        {/* Stats Cards - Responsive */}
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" variants={itemVariants}>
           <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary bg-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Utilisateurs</CardTitle>
@@ -206,7 +206,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary bg-card">
+          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary bg-card min-w-0">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Devis actifs</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -221,14 +221,16 @@ export default function AdminDashboard() {
         {/* Main Content */}
         <motion.div variants={itemVariants}>
           <Tabs defaultValue="users" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2">
               <TabsTrigger value="users">Utilisateurs</TabsTrigger>
               <TabsTrigger value="insurers">Assureurs</TabsTrigger>
               <TabsTrigger value="quotes">Devis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="users">
-              <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card">
+              <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card overflow-x-auto">
+                <div className="min-w-[600px] sm:min-w-0">
+                </div>
                 <CardHeader>
                   <CardTitle>Gestion des utilisateurs</CardTitle>
                   <CardDescription>Gérez tous les utilisateurs de la plateforme</CardDescription>

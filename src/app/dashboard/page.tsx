@@ -171,8 +171,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Actions rapides */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Actions rapides - Responsive */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card group">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg group-hover:text-primary">
@@ -225,8 +225,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Derniers devis */}
-      <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card">
+      {/* Derniers devis - Responsive */}
+      <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card overflow-x-auto">
         <CardHeader>
           <CardTitle className="text-base sm:text-lg text-gray-800">Derniers devis</CardTitle>
           <CardDescription className="text-sm text-gray-600">Vos demandes de comparaison récentes</CardDescription>
@@ -275,8 +275,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats principales */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stats principales - Responsive */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Offres actives</CardTitle>
@@ -338,8 +338,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Actions rapides */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Actions rapides - Responsive */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -392,8 +392,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Derniers devis reçus */}
-      <Card className="hover:shadow-lg transition-all duration-300 border-2 border-gray-200 hover:border-gray-400 bg-gray-50">
+      {/* Derniers devis reçus - Responsive */}
+      <Card className="hover:shadow-lg transition-all duration-300 border-2 border-gray-200 hover:border-gray-400 bg-gray-50 overflow-x-auto">
         <CardHeader>
           <CardTitle className="text-base sm:text-lg text-gray-800">Derniers devis reçus</CardTitle>
           <CardDescription className="text-sm text-gray-600">Nouvelles demandes de comparaison</CardDescription>
@@ -442,8 +442,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats principales */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stats principales - Responsive */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Utilisateurs totaux</CardTitle>
