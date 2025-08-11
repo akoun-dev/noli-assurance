@@ -219,11 +219,14 @@ export default function Home() {
                   transition={{ duration: 0.6, delay: 1 }}
                 >
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
-                    <Link href="/formulaire-assure">
-                      <Button 
-                        size="lg" 
+                    <Link
+                      href="/formulaire-assure"
+                      prefetch={false}
+                      onClick={() => trackEvent('cta_click', { cta: 'main_compare', location: 'hero' })}
+                    >
+                      <Button
+                        size="lg"
                         className="text-lg sm:text-xl px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-colors h-14 w-full sm:w-auto font-semibold"
-                        onClick={() => trackEvent('cta_click', { cta: 'main_compare', location: 'hero' })}
                       >
                         <Car className="mr-2 h-5 w-5" />
                         Commencer mon devis
@@ -279,11 +282,14 @@ export default function Home() {
                   
                   {/* CTA Button */}
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Link href="/formulaire-assure">
-                      <Button 
-                        size="lg" 
+                    <Link
+                      href="/formulaire-assure"
+                      prefetch={false}
+                      onClick={() => trackEvent('cta_click', { cta: 'assurance_auto_card', location: 'hero' })}
+                    >
+                      <Button
+                        size="lg"
                         className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg transition-colors h-12 font-semibold text-lg"
-                        onClick={() => trackEvent('cta_click', { cta: 'assurance_auto_card', location: 'hero' })}
                       >
                         Obtenir mon devis gratuit
                         <ArrowRight className="ml-2 h-5 w-5" />
@@ -348,10 +354,13 @@ export default function Home() {
                   <div className="text-sm text-gray-700">✓ Assistance 24/7</div>
                   <div className="text-sm text-gray-700">✓ Véhicule de remplacement</div>
                 </div>
-                <Link href="/formulaire-assure">
-                  <Button 
+                <Link
+                  href="/formulaire-assure"
+                  prefetch={false}
+                  onClick={() => trackEvent('service_click', { service: 'assurance_auto', location: 'services_grid' })}
+                >
+                  <Button
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                    onClick={() => trackEvent('service_click', { service: 'assurance_auto', location: 'services_grid' })}
                   >
                     Obtenir un devis
                   </Button>

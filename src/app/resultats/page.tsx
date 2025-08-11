@@ -530,24 +530,19 @@ export default function ResultatsPage() {
               </div>
             </Link>
             <div className="flex items-center space-x-4">
-              <Link href="/comparateur">
-                <Button variant="outline" size="sm" className="h-10">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Modifier ma recherche
-                </Button>
-              </Link>
               <Badge variant="outline" className="border-blue-600 text-blue-600 h-10 px-4">
-                {filteredOffers.length} offres trouvées
+                {filteredOffers.length} offres
               </Badge>
               {comparisonOffers.length > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="h-10 border-blue-600 text-blue-600 relative"
                   onClick={() => setShowComparison(true)}
                 >
                   <GitCompare className="mr-2 h-4 w-4" />
-                  Comparer ({comparisonOffers.length}/5)
+                  <span className="hidden sm:inline">Comparer</span>
+                  <span className="sm:ml-1">({comparisonOffers.length}/5)</span>
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-600 rounded-full"></div>
                 </Button>
               )}
@@ -588,7 +583,8 @@ export default function ResultatsPage() {
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-semibold text-blue-800 flex items-center">
                       <GitCompare className="mr-2 h-4 w-4" />
-                      Comparaison ({comparisonOffers.length}/5)
+                      <span className="hidden sm:inline">Comparaison</span>
+                      <span className="sm:ml-1">({comparisonOffers.length}/5)</span>
                     </h4>
                     <Button
                       variant="ghost"
@@ -596,7 +592,8 @@ export default function ResultatsPage() {
                       onClick={() => setShowComparison(true)}
                       className="text-blue-600 hover:text-blue-800 h-8"
                     >
-                      Voir
+                      <span className="hidden sm:inline">Voir</span>
+                      <Eye className="sm:hidden h-4 w-4" />
                     </Button>
                   </div>
                   <div className="space-y-2">
@@ -864,32 +861,35 @@ export default function ResultatsPage() {
                                       size="sm"
                                       onClick={() => toggleFavorite(offer.id)}
                                       className={`p-2 ${favorites.includes(offer.id) ? 'text-red-500' : 'text-gray-400'}`}
+                                      aria-label={favorites.includes(offer.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
                                     >
                                       <Heart className={`h-4 w-4 ${favorites.includes(offer.id) ? 'fill-current' : ''}`} />
                                     </Button>
                                   </motion.div>
                                   <div className="relative group">
-                                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => toggleComparison(offer)}
-                                      className={`p-2 relative ${comparisonOffers.find(o => o.id === offer.id) ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:text-blue-600'}`}
-                                      disabled={comparisonOffers.length >= 5 && !comparisonOffers.find(o => o.id === offer.id)}
-                                    >
-                                      <GitCompare className="h-4 w-4" />
-                                      {comparisonOffers.find(o => o.id === offer.id) && (
-                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full"></div>
-                                      )}
-                                    </Button>
-                                  </motion.div>
-                                  {comparisonOffers.length >= 5 && !comparisonOffers.find(o => o.id === offer.id) && (
-                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                      Maximum 5 offres pour la comparaison
-                                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                                    </div>
-                                  )}
-                                </div>
+                                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => toggleComparison(offer)}
+                                        className={`p-2 relative ${comparisonOffers.find(o => o.id === offer.id) ? 'text-blue-600 bg-blue-50' : 'text-gray-400 hover:text-blue-600'}`}
+                                        disabled={comparisonOffers.length >= 5 && !comparisonOffers.find(o => o.id === offer.id)}
+                                        aria-label={comparisonOffers.find(o => o.id === offer.id) ? "Retirer de la comparaison" : "Ajouter à la comparaison"}
+                                      >
+                                        <GitCompare className="h-4 w-4" />
+                                        {comparisonOffers.find(o => o.id === offer.id) && (
+                                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full"></div>
+                                        )}
+                                      </Button>
+                                    </motion.div>
+                                    {comparisonOffers.length >= 5 && !comparisonOffers.find(o => o.id === offer.id) && (
+                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        <span className="hidden sm:inline">Maximum 5 offres pour la comparaison</span>
+                                        <span className="sm:hidden">Max 5</span>
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                      </div>
+                                    )}
+                                  </div>
                                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                                     <Dialog>
                                       <DialogTrigger asChild>

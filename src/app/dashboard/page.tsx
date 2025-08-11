@@ -103,7 +103,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-blue-600">Tableau de bord</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Bienvenue sur votre espace personnel NOLI Motor
+            Bienvenue sur votre espace personnel NOLI Assurance
           </p>
         </div>
       </div>
@@ -437,7 +437,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Tableau de bord Administrateur</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Vue d'ensemble complète de la plateforme NOLI Motor
+            Vue d'ensemble complète de la plateforme NOLI Assurance
           </p>
         </div>
       </div>
