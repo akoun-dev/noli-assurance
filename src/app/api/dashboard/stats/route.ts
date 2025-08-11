@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     switch (userRole) {
       case 'USER':
         // Stats pour les utilisateurs
-        const [userQuotesCount, acceptedQuotesCount, totalInsurers] = await Promise.all([
+        const [userQuotesCount, acceptedQuotesCount, totalInsurers, averageSavings] = await Promise.all([
           db.quote.count({
             where: {
               userId: session.user.id,
@@ -30,7 +30,16 @@ export async function GET(request: NextRequest) {
             }
           }),
           db.insurer.count({
-            where: { isActive: true }
+            where: { statut: 'ACTIF' }
+          }),
+          db.quoteOffer.aggregate({
+            where: {
+              quote: { userId: session.user.id },
+              selected: true
+            },
+            _avg: {
+              priceAtQuote: true
+            }
           })
         ])
 
@@ -52,7 +61,8 @@ export async function GET(request: NextRequest) {
           stats: {
             pendingQuotes: userQuotesCount,
             acceptedQuotes: acceptedQuotesCount,
-            savingsRate: 15, // Calculé dynamiquement dans une vraie application
+            savingsRate: averageSavings._avg.priceAtQuote ?
+              Math.round((1 - (averageSavings._avg.priceAtQuote / 50000)) * 100) : 15,
             totalInsurers
           },
           recentQuotes
@@ -60,32 +70,50 @@ export async function GET(request: NextRequest) {
 
       case 'INSURER':
         // Stats pour les assureurs
-        const [activeOffersCount, receivedQuotesCount, conversionRate, monthlyRevenue] = await Promise.all([
+        const [activeOffersCount, receivedQuotesCount, conversionRate, monthlyRevenue, insurerStats] = await Promise.all([
           db.insuranceOffer.count({
-            where: { isActive: true }
+            where: {
+              isActive: true,
+              insurer: { userId: session.user.id }
+            }
           }),
           db.quote.count({
             where: {
-              status: { in: ['pending', 'sent', 'contacted'] }
+              status: { in: ['pending', 'sent', 'contacted'] },
+              quoteOffers: {
+                some: {
+                  offer: { insurer: { userId: session.user.id } }
+                }
+              }
             }
-          }),
-          db.quote.aggregate({
-            where: {
-              status: 'converted'
-            },
-            _count: { id: true }
           }),
           db.quote.aggregate({
             where: {
               status: 'converted',
+              quoteOffers: {
+                some: {
+                  offer: { insurer: { userId: session.user.id } }
+                }
+              }
+            },
+            _count: { id: true }
+          }),
+          db.quoteOffer.aggregate({
+            where: {
+              selected: true,
+              offer: { insurer: { userId: session.user.id } },
               createdAt: {
                 gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
               }
             },
-            _sum: {
-              // Ceci serait calculé différemment dans une vraie application
-              // basé sur les prix des offres acceptées
-            }
+            _sum: { priceAtQuote: true }
+          }),
+          db.quoteOffer.groupBy({
+            by: ['offerId'],
+            where: {
+              offer: { insurer: { userId: session.user.id } }
+            },
+            _count: { id: true }
           })
         ])
 
@@ -112,7 +140,8 @@ export async function GET(request: NextRequest) {
             activeOffers: activeOffersCount,
             receivedQuotes: receivedQuotesCount,
             conversionRate: calculatedConversionRate,
-            monthlyRevenue: '2.4M' // Valeur fictive
+            monthlyRevenue: monthlyRevenue._sum.priceAtQuote ?
+              `${(monthlyRevenue._sum.priceAtQuote / 1000).toFixed(1)}K` : '0',
           },
           recentQuotes: recentReceivedQuotes
         })
@@ -121,7 +150,7 @@ export async function GET(request: NextRequest) {
         // Stats pour les administrateurs
         const [totalUsers, activeInsurers, totalQuotesGenerated, adminConversionRate] = await Promise.all([
           db.user.count(),
-          db.insurer.count({ where: { isActive: true } }),
+          db.insuranceOffer.count({ where: { isActive: true } }),
           db.quote.count(),
           db.quote.aggregate({
             where: {

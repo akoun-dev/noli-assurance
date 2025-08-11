@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { 
-  Car, 
-  Search, 
-  Filter, 
-  Building2, 
-  Users, 
+import { useState, useEffect } from 'react'
+import {
+  Car,
+  Search,
+  Filter,
+  Building2,
+  Users,
   Calendar,
   TrendingUp,
   Star,
@@ -21,53 +22,49 @@ import {
   ToggleLeft
 } from 'lucide-react'
 
+interface InsuranceOffer {
+  id: number
+  name: string
+  insurer: string
+  price: string
+  coverage: string
+  status: string
+  subscribers: number
+  createdAt: string
+  rating: number
+}
+
 export default function OffresAdminPage() {
-  const offers = [
-    {
-      id: 1,
-      name: 'Assurance Tiers Complet',
-      insurer: 'NSIA Assurances',
-      price: '85,000 FCFA',
-      coverage: 'Responsabilité civile + Vol + Incendie',
-      status: 'active',
-      subscribers: 45,
-      createdAt: '2024-01-01',
-      rating: 4.5
-    },
-    {
-      id: 2,
-      name: 'Assurance Tous Risques',
-      insurer: 'SUNU Assurances',
-      price: '150,000 FCFA',
-      coverage: 'Tous risques inclus',
-      status: 'active',
-      subscribers: 23,
-      createdAt: '2024-01-05',
-      rating: 4.3
-    },
-    {
-      id: 3,
-      name: 'Assurance Économique',
-      insurer: 'AXA Côte d\'Ivoire',
-      price: '45,000 FCFA',
-      coverage: 'Responsabilité civile uniquement',
-      status: 'inactive',
-      subscribers: 12,
-      createdAt: '2024-01-10',
-      rating: 4.1
-    },
-    {
-      id: 4,
-      name: 'Assurance Premium',
-      insurer: 'Allianz CI',
-      price: '200,000 FCFA',
-      coverage: 'Premium tous risques',
-      status: 'active',
-      subscribers: 8,
-      createdAt: '2024-01-15',
-      rating: 4.7
+  const [offers, setOffers] = useState<InsuranceOffer[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const response = await fetch('/api/insurance-offers')
+        const data = await response.json()
+        if (response.ok) {
+          setOffers(data.offers)
+        } else {
+          console.error('Error fetching offers:', data.error)
+        }
+      } catch (error) {
+        console.error('Network error:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    fetchOffers()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   const getStatusBadge = (status: string) => {
     return status === 'active' ? (

@@ -1,14 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Building2, 
-  Search, 
-  Filter, 
+import {
+  Building2,
+  Search,
+  Filter,
   Phone,
   Mail,
   MapPin,
@@ -24,79 +24,54 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 
+interface Insurer {
+  id: string
+  nomEntreprise: string
+  email: string
+  telephone: string
+  adresseEntreprise: string
+  statut: string
+  dateCreation: string
+  siteWeb?: string
+  description?: string
+}
+
 export default function AssureursPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  
-  const insurers = [
-    {
-      id: 1,
-      name: 'NSIA Assurances',
-      email: 'contact@nsia.ci',
-      phone: '+225 27 20 00 00 00',
-      address: 'Abidjan, Plateau',
-      status: 'active',
-      joinDate: '2024-01-01',
-      offersCount: 8,
-      totalQuotes: 156,
-      acceptedQuotes: 35,
-      rating: 4.5
-    },
-    {
-      id: 2,
-      name: 'SUNU Assurances',
-      email: 'contact@sunu.ci',
-      phone: '+225 27 21 00 00 00',
-      address: 'Abidjan, Cocody',
-      status: 'active',
-      joinDate: '2024-01-05',
-      offersCount: 6,
-      totalQuotes: 134,
-      acceptedQuotes: 28,
-      rating: 4.3
-    },
-    {
-      id: 3,
-      name: 'AXA Côte d\'Ivoire',
-      email: 'contact@axa.ci',
-      phone: '+225 27 22 00 00 00',
-      address: 'Abidjan, Marcory',
-      status: 'pending',
-      joinDate: '2024-01-10',
-      offersCount: 4,
-      totalQuotes: 89,
-      acceptedQuotes: 18,
-      rating: 4.1
-    },
-    {
-      id: 4,
-      name: 'Allianz CI',
-      email: 'contact@allianz.ci',
-      phone: '+225 27 23 00 00 00',
-      address: 'Abidjan, Treichville',
-      status: 'active',
-      joinDate: '2024-01-15',
-      offersCount: 5,
-      totalQuotes: 98,
-      acceptedQuotes: 22,
-      rating: 4.4
+  const [insurers, setInsurers] = useState<Insurer[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchInsurers = async () => {
+      try {
+        const response = await fetch('/api/assureurs')
+        const data = await response.json()
+        setInsurers(data.insurers)
+      } catch (error) {
+        console.error('Error fetching insurers:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+
+    fetchInsurers()
+  }, [])
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'ACTIF':
         return <Badge variant="default" className="bg-green-500">
           <CheckCircle className="w-3 h-3 mr-1" />
           Actif
         </Badge>
-      case 'pending':
-        return <Badge variant="secondary">
-          En attente
-        </Badge>
-      case 'inactive':
+      case 'INACTIF':
         return <Badge variant="destructive">
           <Ban className="w-3 h-3 mr-1" />
           Inactif
+        </Badge>
+      case 'SUSPENDU':
+        return <Badge variant="secondary">
+          Suspendu
         </Badge>
       default:
         return <Badge variant="outline">Inconnu</Badge>
@@ -113,9 +88,17 @@ export default function AssureursPage() {
   }
 
   const filteredInsurers = insurers.filter(insurer =>
-    insurer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    insurer.nomEntreprise.toLowerCase().includes(searchTerm.toLowerCase()) ||
     insurer.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p>Chargement des assureurs...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -153,30 +136,20 @@ export default function AssureursPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {insurers.filter(i => i.status === 'active').length}
+              {insurers.filter(i => i.statut === 'ACTIF').length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total devis</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total assureurs</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {insurers.reduce((sum, insurer) => sum + insurer.totalQuotes, 0)}
+              {insurers.length}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taux conversion</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">23%</div>
           </CardContent>
         </Card>
       </div>
@@ -213,15 +186,14 @@ export default function AssureursPage() {
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">{insurer.name}</CardTitle>
+                    <CardTitle className="text-xl">{insurer.nomEntreprise}</CardTitle>
                     <CardDescription>
-                      {insurer.address} • Membre depuis le {new Date(insurer.joinDate).toLocaleDateString('fr-FR')}
+                      {insurer.adresseEntreprise} • Membre depuis le {new Date(insurer.dateCreation).toLocaleDateString('fr-FR')}
                     </CardDescription>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {getStatusBadge(insurer.status)}
-                  {getRatingStars(insurer.rating)}
+                  {getStatusBadge(insurer.statut)}
                 </div>
               </div>
             </CardHeader>
@@ -234,30 +206,28 @@ export default function AssureursPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{insurer.phone}</span>
+                    <span className="text-sm">{insurer.telephone}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{insurer.address}</span>
+                    <span className="text-sm">{insurer.adresseEntreprise}</span>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Offres actives</span>
-                    <span className="text-sm font-medium">{insurer.offersCount}</span>
+                    <span className="text-sm text-muted-foreground">Site web</span>
+                    <span className="text-sm font-medium">
+                      {insurer.siteWeb ? (
+                        <a href={insurer.siteWeb} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          {insurer.siteWeb}
+                        </a>
+                      ) : 'Non spécifié'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Devis reçus</span>
-                    <span className="text-sm font-medium">{insurer.totalQuotes}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Devis acceptés</span>
-                    <span className="text-sm font-medium">{insurer.acceptedQuotes}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Taux de conversion</span>
                     <span className="text-sm font-medium">
-                      {Math.round((insurer.acceptedQuotes / insurer.totalQuotes) * 100)}%
+                      {insurer.description || 'Non spécifié'}
                     </span>
                   </div>
                 </div>

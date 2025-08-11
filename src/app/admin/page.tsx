@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Building2, FileText, TrendingUp, Shield, Settings, UserCheck, UserX, Plus, Edit, Trash2 } from "lucide-react"
+import { Users, Building2, FileText, TrendingUp, Shield, Settings, UserCheck, UserX, Plus, Edit, Trash2, Filter } from "lucide-react"
 import { useSession } from "next-auth/react"
 
 interface User {
@@ -229,60 +229,82 @@ export default function AdminDashboard() {
 
             <TabsContent value="users">
               <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card overflow-x-auto">
-                <div className="min-w-[600px] sm:min-w-0">
-                </div>
                 <CardHeader>
-                  <CardTitle>Gestion des utilisateurs</CardTitle>
-                  <CardDescription>Gérez tous les utilisateurs de la plateforme</CardDescription>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <CardTitle>Tous les utilisateurs enregistrés</CardTitle>
+                      <CardDescription>Gestion complète des comptes utilisateurs</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Ajouter
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Filter className="h-4 w-4 mr-2" />
+                        Filtrer
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nom</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Téléphone</TableHead>
-                        <TableHead>Rôle</TableHead>
-                        <TableHead>Date d'inscription</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">
-                            {user.prenom} {user.nom}
-                          </TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.telephone}</TableCell>
-                          <TableCell>
-                            <Badge className={getRoleBadgeColor(user.role)}>
-                              {user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(user.createdAt).toLocaleDateString('fr-FR')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap min-w-[120px]">Nom</TableHead>
+                          <TableHead className="whitespace-nowrap hidden sm:table-cell">Email</TableHead>
+                          <TableHead className="whitespace-nowrap hidden md:table-cell">Téléphone</TableHead>
+                          <TableHead className="whitespace-nowrap">Rôle</TableHead>
+                          <TableHead className="whitespace-nowrap hidden lg:table-cell">Date</TableHead>
+                          <TableHead className="whitespace-nowrap">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium whitespace-nowrap">
+                              <div className="flex flex-col">
+                                <span className="font-semibold">{user.prenom} {user.nom}</span>
+                                <span className="text-xs text-gray-500 sm:hidden">{user.email}</span>
+                                <span className="text-xs text-gray-500 md:hidden">{user.telephone}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap hidden sm:table-cell">
+                              <span className="truncate max-w-[120px] inline-block">{user.email}</span>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap hidden md:table-cell">
+                              {user.telephone}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <Badge className={getRoleBadgeColor(user.role)}>
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap hidden lg:table-cell">
+                              {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <div className="flex space-x-1">
+                                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                  <Edit className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="insurers">
-              <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card">
+              <Card className="hover:shadow-lg transition-all duration-300 border-2 border-border hover:border-primary bg-card w-full overflow-hidden">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
