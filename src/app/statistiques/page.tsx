@@ -14,30 +14,69 @@ import {
   Eye
 } from 'lucide-react'
 
+import { useEffect, useState } from 'react'
+
+type Stats = {
+  totalQuotes: number
+  acceptedQuotes: number
+  conversionRate: number
+  revenue: string
+  monthlyGrowth: number
+  avgResponseTime: string
+}
+
+type Offer = {
+  name: string
+  quotes: number
+  conversion: number
+}
+
+type MonthlyData = {
+  month: string
+  quotes: number
+  accepted: number
+}
+
 export default function StatistiquesPage() {
-  const stats = {
-    totalQuotes: 1247,
-    acceptedQuotes: 283,
-    conversionRate: 22.7,
-    revenue: '12.4M',
-    monthlyGrowth: 15.2,
-    avgResponseTime: '2.3h'
-  }
+  const [stats, setStats] = useState<Stats>({
+    totalQuotes: 0,
+    acceptedQuotes: 0,
+    conversionRate: 0,
+    revenue: '0',
+    monthlyGrowth: 0,
+    avgResponseTime: '0h'
+  })
 
-  const topOffers = [
-    { name: 'Assurance Tiers Complet', quotes: 89, conversion: 24 },
-    { name: 'Assurance Tous Risques', quotes: 67, conversion: 18 },
-    { name: 'Assurance Économique', quotes: 45, conversion: 12 }
-  ]
+  const [topOffers, setTopOffers] = useState<Offer[]>([])
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const monthlyData = [
-    { month: 'Jan', quotes: 89, accepted: 20 },
-    { month: 'Fév', quotes: 102, accepted: 23 },
-    { month: 'Mar', quotes: 118, accepted: 27 },
-    { month: 'Avr', quotes: 134, accepted: 31 },
-    { month: 'Mai', quotes: 156, accepted: 36 },
-    { month: 'Juin', quotes: 178, accepted: 41 }
-  ]
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/dashboard/stats')
+        const data = await response.json()
+        
+        setStats({
+          totalQuotes: data.totalQuotes,
+          acceptedQuotes: data.acceptedQuotes,
+          conversionRate: data.conversionRate,
+          revenue: data.revenue,
+          monthlyGrowth: data.monthlyGrowth,
+          avgResponseTime: data.avgResponseTime
+        })
+
+        setTopOffers(data.topOffers)
+        setMonthlyData(data.monthlyData)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
 
   return (
     <div className="space-y-6">

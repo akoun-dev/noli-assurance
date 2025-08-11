@@ -13,191 +13,160 @@ export async function GET(request: NextRequest) {
 
     const userRole = session.user.role
 
+    // Définition des types
+    type MonthlyStat = {
+      month: string
+      quotes: number
+      accepted: number
+    }
+
+    type TopOffer = {
+      name: string
+      quotes: number
+      conversion: number
+    }
+
+    type StatsBase = {
+      totalQuotes: number
+      acceptedQuotes: number
+      conversionRate: number
+      revenue: string
+      monthlyGrowth: number
+      avgResponseTime: string
+    }
+
+    type AdminStats = StatsBase & {
+      totalUsers: number
+      activeInsurers: number
+      lastMonthUsers: number
+    }
+
+    type CommonStats = {
+      stats: StatsBase | AdminStats
+      monthlyData: MonthlyStat[]
+      topOffers: TopOffer[]
+    }
+
+    // Format commun pour toutes les statistiques
+    const getCommonStats = async (): Promise<CommonStats> => {
+      const [totalQuotes, acceptedQuotes] = await Promise.all([
+        db.quote.count(),
+        db.quote.count({ where: { status: 'converted' } })
+      ])
+
+      // Calcul du taux de conversion
+      const conversionRate = totalQuotes > 0
+        ? parseFloat(((acceptedQuotes / totalQuotes) * 100).toFixed(1))
+        : 0
+
+      // Calcul du chiffre d'affaires (exemple simplifié)
+      const revenueResult = await db.quoteOffer.aggregate({
+        where: { selected: true },
+        _sum: { priceAtQuote: true }
+      })
+      const revenue = revenueResult._sum.priceAtQuote
+        ? `${(revenueResult._sum.priceAtQuote / 1000000).toFixed(1)}M`
+        : '0'
+
+      // Données mensuelles (6 derniers mois)
+      const monthlyData = await getMonthlyStats()
+
+      // Offres les plus populaires
+      const topOffers = await getTopOffers()
+
+      return {
+        stats: {
+          totalQuotes,
+          acceptedQuotes,
+          conversionRate,
+          revenue,
+          monthlyGrowth: 15.2, // À calculer
+          avgResponseTime: '2.3h' // À calculer
+        },
+        monthlyData,
+        topOffers
+      }
+    }
+
+    const getMonthlyStats = async (): Promise<MonthlyStat[]> => {
+      const months: MonthlyStat[] = []
+      const now = new Date()
+      
+      for (let i = 5; i >= 0; i--) {
+        const startDate = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const endDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
+        
+        const [quotes, accepted] = await Promise.all([
+          db.quote.count({
+            where: { createdAt: { gte: startDate, lte: endDate } }
+          }),
+          db.quote.count({
+            where: {
+              createdAt: { gte: startDate, lte: endDate },
+              status: 'converted'
+            }
+          })
+        ])
+
+        const monthStat: MonthlyStat = {
+          month: startDate.toLocaleString('fr-FR', { month: 'short' }),
+          quotes,
+          accepted
+        }
+        months.push(monthStat)
+      }
+
+      return months
+    }
+
+    const getTopOffers = async () => {
+      const offers = await db.insuranceOffer.findMany({
+        take: 3,
+        orderBy: { quoteOffers: { _count: 'desc' } },
+        select: {
+          name: true,
+          _count: { select: { quoteOffers: true } }
+        }
+      })
+
+      return offers.map(offer => ({
+        name: offer.name,
+        quotes: offer._count.quoteOffers,
+        conversion: Math.floor(Math.random() * 30) + 10 // À remplacer par un vrai calcul
+      }))
+    }
+
     switch (userRole) {
       case 'USER':
-        // Stats pour les utilisateurs
-        const [userQuotesCount, acceptedQuotesCount, totalInsurers, averageSavings] = await Promise.all([
-          db.quote.count({
-            where: {
-              userId: session.user.id,
-              status: { in: ['pending', 'sent'] }
-            }
-          }),
-          db.quote.count({
-            where: {
-              userId: session.user.id,
-              status: 'converted'
-            }
-          }),
-          db.insurer.count({
-            where: { statut: 'ACTIF' }
-          }),
-          db.quoteOffer.aggregate({
-            where: {
-              quote: { userId: session.user.id },
-              selected: true
-            },
-            _avg: {
-              priceAtQuote: true
-            }
-          })
-        ])
-
-        const recentQuotes = await db.quote.findMany({
-          where: { userId: session.user.id },
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          select: {
-            id: true,
-            quoteReference: true,
-            status: true,
-            createdAt: true,
-            nom: true,
-            prenom: true
-          }
-        })
-
-        return NextResponse.json({
-          stats: {
-            pendingQuotes: userQuotesCount,
-            acceptedQuotes: acceptedQuotesCount,
-            savingsRate: averageSavings._avg.priceAtQuote ?
-              Math.round((1 - (averageSavings._avg.priceAtQuote / 50000)) * 100) : 15,
-            totalInsurers
-          },
-          recentQuotes
-        })
-
       case 'INSURER':
-        // Stats pour les assureurs
-        const [activeOffersCount, receivedQuotesCount, conversionRate, monthlyRevenue, insurerStats] = await Promise.all([
-          db.insuranceOffer.count({
-            where: {
-              isActive: true,
-              insurer: { userId: session.user.id }
-            }
-          }),
-          db.quote.count({
-            where: {
-              status: { in: ['pending', 'sent', 'contacted'] },
-              quoteOffers: {
-                some: {
-                  offer: { insurer: { userId: session.user.id } }
-                }
-              }
-            }
-          }),
-          db.quote.aggregate({
-            where: {
-              status: 'converted',
-              quoteOffers: {
-                some: {
-                  offer: { insurer: { userId: session.user.id } }
-                }
-              }
-            },
-            _count: { id: true }
-          }),
-          db.quoteOffer.aggregate({
-            where: {
-              selected: true,
-              offer: { insurer: { userId: session.user.id } },
-              createdAt: {
-                gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-              }
-            },
-            _sum: { priceAtQuote: true }
-          }),
-          db.quoteOffer.groupBy({
-            by: ['offerId'],
-            where: {
-              offer: { insurer: { userId: session.user.id } }
-            },
-            _count: { id: true }
-          })
-        ])
-
-        const totalQuotes = await db.quote.count()
-        const calculatedConversionRate = totalQuotes > 0 
-          ? Math.round((conversionRate._count.id / totalQuotes) * 100) 
-          : 0
-
-        const recentReceivedQuotes = await db.quote.findMany({
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-          select: {
-            id: true,
-            quoteReference: true,
-            status: true,
-            createdAt: true,
-            nom: true,
-            prenom: true
-          }
-        })
-
-        return NextResponse.json({
-          stats: {
-            activeOffers: activeOffersCount,
-            receivedQuotes: receivedQuotesCount,
-            conversionRate: calculatedConversionRate,
-            monthlyRevenue: monthlyRevenue._sum.priceAtQuote ?
-              `${(monthlyRevenue._sum.priceAtQuote / 1000).toFixed(1)}K` : '0',
-          },
-          recentQuotes: recentReceivedQuotes
-        })
-
       case 'ADMIN':
-        // Stats pour les administrateurs
-        const [totalUsers, activeInsurers, totalQuotesGenerated, adminConversionRate] = await Promise.all([
-          db.user.count(),
-          db.insuranceOffer.count({ where: { isActive: true } }),
-          db.quote.count(),
-          db.quote.aggregate({
-            where: {
-              status: 'converted'
-            },
-            _count: { id: true }
-          })
-        ])
-
-        const totalQuotesCount = await db.quote.count()
-        const calculatedAdminConversionRate = totalQuotesCount > 0 
-          ? Math.round((adminConversionRate._count.id / totalQuotesCount) * 100) 
-          : 0
-
-        // Stats du mois dernier pour comparaison
-        const lastMonth = new Date()
-        lastMonth.setMonth(lastMonth.getMonth() - 1)
+        const commonStats = await getCommonStats()
         
-        const [lastMonthUsers, lastMonthQuotes] = await Promise.all([
-          db.user.count({
-            where: {
-              createdAt: {
-                gte: lastMonth,
-                lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        if (userRole === 'ADMIN') {
+          const [totalUsers, activeInsurers, lastMonthUsers] = await Promise.all([
+            db.user.count(),
+            db.insuranceOffer.count({ where: { isActive: true } }),
+            db.user.count({
+              where: {
+                createdAt: {
+                  gte: new Date(new Date().setMonth(new Date().getMonth() - 1))
+                }
               }
-            }
-          }),
-          db.quote.count({
-            where: {
-              createdAt: {
-                gte: lastMonth,
-                lt: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-              }
+            })
+          ])
+          
+          return NextResponse.json({
+            ...commonStats,
+            stats: {
+              ...commonStats.stats,
+              totalUsers,
+              activeInsurers,
+              lastMonthUsers
             }
           })
-        ])
-
-        return NextResponse.json({
-          stats: {
-            totalUsers,
-            activeInsurers,
-            totalQuotesGenerated,
-            conversionRate: calculatedAdminConversionRate,
-            lastMonthUsers,
-            lastMonthQuotes
-          }
-        })
+        }
+        
+        return NextResponse.json(commonStats)
 
       default:
         return NextResponse.json({ error: 'Rôle non reconnu' }, { status: 400 })
