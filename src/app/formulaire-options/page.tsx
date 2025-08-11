@@ -318,13 +318,13 @@ export default function FormulaireOptions() {
                         Quelle formule souhaitez-vous ?
                       </Label>
                       
-                      <RadioGroup 
-                        value={formData.typeCouverture} 
+                      <RadioGroup
+                        value={formData.typeCouverture}
                         onValueChange={(value) => handleInputChange('typeCouverture', value)}
-                        className="space-y-4"
+                        className="grid grid-cols-1 md:grid-cols-3 gap-4"
                       >
                         {insuranceOptions.map((option) => (
-                          <div key={option.id} className="relative">
+                          <div key={option.id} className="relative h-full">
                             <RadioGroupItem
                               value={option.id}
                               id={option.id}
@@ -332,14 +332,14 @@ export default function FormulaireOptions() {
                             />
                             <Label
                               htmlFor={option.id}
-                              className={`block p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                              className={`block h-full p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
                                 formData.typeCouverture === option.id
                                   ? `${option.color} border-blue-500 bg-blue-50`
                                   : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
                               <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                                <div className="flex-1 flex flex-col">
                                   <div className="flex items-center mb-2">
                                     <div className={`w-4 h-4 rounded-full border-2 mr-3 ${
                                       formData.typeCouverture === option.id
@@ -364,7 +364,7 @@ export default function FormulaireOptions() {
                                     </div>
                                   </div>
                                   
-                                  <div className="ml-7 mt-3">
+                                  <div className="ml-7 mt-3 flex-1">
                                     <ul className="space-y-1">
                                       {option.features.map((feature, index) => (
                                         <li key={index} className="flex items-center text-sm text-gray-600">
@@ -387,8 +387,8 @@ export default function FormulaireOptions() {
                     </div>
 
                     {/* Date d'effet et durée */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-6 w-full">
+                      <div className="space-y-2 w-full">
                         <Label htmlFor="dateEffet" className="text-sm font-medium text-gray-700 flex items-center">
                           <Calendar className="w-4 h-4 mr-2 text-blue-600" />
                           Date d'effet *
@@ -407,12 +407,12 @@ export default function FormulaireOptions() {
                         )}
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2 w-full">
                         <Label htmlFor="dureeContrat" className="text-sm font-medium text-gray-700">
                           Durée du contrat
                         </Label>
                         <Select value={formData.dureeContrat} onValueChange={(value) => handleInputChange('dureeContrat', value)}>
-                          <SelectTrigger className="h-12 text-base border-gray-300 focus:border-blue-500">
+                          <SelectTrigger className="h-12 text-base border-gray-300 focus:border-blue-500 w-full">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -431,7 +431,7 @@ export default function FormulaireOptions() {
                         Options additionnelles
                       </Label>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 w-full">
                         {additionalOptions.map((option) => (
                           <div key={option.id} className="relative">
                             <input

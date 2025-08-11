@@ -260,7 +260,7 @@ export default function FormulaireVehicule() {
                 </CardHeader>
                 
                 <CardContent className="px-6 sm:px-8">
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
                     {/* Type de carburant */}
                     <div className="space-y-2">
                       <Label htmlFor="energie" className="text-sm font-medium text-gray-700 flex items-center">
@@ -268,7 +268,7 @@ export default function FormulaireVehicule() {
                         Carburant *
                       </Label>
                       <Select value={formData.energie} onValueChange={(value) => handleInputChange('energie', value)}>
-                        <SelectTrigger className={`h-12 text-base ${errors.energie ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
+                        <SelectTrigger className={`w-full h-12 text-base ${errors.energie ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
                           <SelectValue placeholder="Sélectionner le type de carburant" />
                         </SelectTrigger>
                         <SelectContent>
@@ -290,7 +290,7 @@ export default function FormulaireVehicule() {
                         Puissance fiscale *
                       </Label>
                       <Select value={formData.puissanceFiscale} onValueChange={(value) => handleInputChange('puissanceFiscale', value)}>
-                        <SelectTrigger className={`h-12 text-base ${errors.puissanceFiscale ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
+                        <SelectTrigger className={`w-full h-12 text-base ${errors.puissanceFiscale ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -320,7 +320,7 @@ export default function FormulaireVehicule() {
                         Nombre de places *
                       </Label>
                       <Select value={formData.nombrePlaces} onValueChange={(value) => handleInputChange('nombrePlaces', value)}>
-                        <SelectTrigger className={`h-12 text-base ${errors.nombrePlaces ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
+                        <SelectTrigger className={`w-full h-12 text-base ${errors.nombrePlaces ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -403,7 +403,7 @@ export default function FormulaireVehicule() {
                         Usage du véhicule *
                       </Label>
                       <Select value={formData.usageVehicule} onValueChange={(value) => handleInputChange('usageVehicule', value)}>
-                        <SelectTrigger className={`h-12 text-base ${errors.usageVehicule ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
+                        <SelectTrigger className={`w-full h-12 text-base ${errors.usageVehicule ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
                           <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -421,7 +421,7 @@ export default function FormulaireVehicule() {
                     </div>
 
                     {/* Boutons de navigation */}
-                    <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                    <div className="col-span-full flex flex-col sm:flex-row gap-4 pt-6">
                       <Button
                         type="button"
                         variant="outline"

@@ -16,16 +16,22 @@ export default function Home() {
   const router = useRouter()
 
   const trackEvent = (eventType: string, eventData?: any) => {
-    fetch('/api/analytics', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        eventType,
-        eventData
-      })
-    }).catch(console.error)
+    if (typeof window !== 'undefined') {
+      try {
+        const data = JSON.stringify({ eventType, eventData })
+        // Essayer d'abord avec sendBeacon, sinon fallback sur fetch
+        if (!navigator.sendBeacon?.('/api/analytics', data)) {
+          fetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: data,
+            keepalive: true
+          }).catch(() => {})
+        }
+      } catch (e) {
+        console.error('Tracking error:', e)
+      }
+    }
   }
 
   useEffect(() => {
@@ -183,9 +189,33 @@ export default function Home() {
                 >
                   Comparez gratuitement les offres des plus grands assureurs ivoiriens et trouvez l'assurance qui vous correspond au meilleur prix.
                 </motion.p>
+
+                {/* CTA Principal */}
+                <motion.div
+                  className="mb-8 sm:mb-12"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <button
+                      className="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white text-lg font-semibold py-3 px-6 rounded-lg shadow-lg transition-colors"
+                      onClick={async () => {
+                        await trackEvent('cta_click', { cta: 'main_compare', location: 'hero' });
+                        window.location.assign('/formulaire-assure');
+                      }}
+                    >
+                      Commencer mon devis
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </button>
+                  </motion.div>
+                </motion.div>
                 
                 {/* Stats */}
-                <motion.div 
+                <motion.div
                   className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 sm:mb-12"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -211,30 +241,6 @@ export default function Home() {
                   ))}
                 </motion.div>
                 
-                {/* CTA Principal */}
-                <motion.div 
-                  className="flex flex-col sm:flex-row gap-4"
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 1 }}
-                >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto">
-                    <Link
-                      href="/formulaire-assure"
-                      prefetch={false}
-                      onClick={() => trackEvent('cta_click', { cta: 'main_compare', location: 'hero' })}
-                    >
-                      <Button
-                        size="lg"
-                        className="text-lg sm:text-xl px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-colors h-14 w-full sm:w-auto font-semibold"
-                      >
-                        <Car className="mr-2 h-5 w-5" />
-                        Commencer mon devis
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                    </Link>
-                  </motion.div>
-                </motion.div>
               </motion.div>
               
               {/* Partie droite - CTA Card */}
