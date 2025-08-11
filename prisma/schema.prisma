@@ -1,0 +1,239 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Assurés (utilisateurs du formulaire)
+model Assure {
+  id              String   @id @default(cuid())
+  nom             String
+  prenom          String
+  email           String   @unique
+  telephone       String
+  isWhatsApp      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  quotes          Quote[]
+  
+  @@map("assures")
+}
+
+// Utilisateurs du comparateur
+model User {
+  id              String   @id @default(cuid())
+  email           String?  @unique
+  telephone       String   @unique
+  nom             String
+  prenom          String
+  password        String?
+  role            Role     @default(USER)
+  dateNaissance   DateTime?
+  datePermis      DateTime?
+  emailVerified   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  quotes          Quote[]
+  userAnalytics   UserAnalytics[]
+  insurer         Insurer?
+  
+  @@map("users")
+}
+
+enum Role {
+  USER
+  INSURER
+  ADMIN
+}
+
+// Assureurs partenaires
+model Insurer {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  nom             String
+  prenom          String
+  email           String   @unique
+  telephone       String
+  nomEntreprise   String   @unique
+  adresseEntreprise String
+  siegeSocial     String
+  numeroRegistre  String   @unique
+  numeroAgrement  String   @unique
+  domaineActivite  String
+  anneeExperience String
+  nombreEmployes  String
+  siteWeb         String?
+  description     String?
+  statut          String   @default("ACTIF") // "ACTIF", "INACTIF", "SUSPENDU"
+  dateCreation    DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  insuranceOffers InsuranceOffer[]
+  
+  @@map("insurers")
+}
+
+// Offres d'assurance
+model InsuranceOffer {
+  id              String   @id @default(cuid())
+  insurerId       String
+  name            String
+  coverageLevel   String   // "Tiers", "Tiers +", "Tous risques"
+  monthlyPrice    Float
+  annualPrice     Float
+  franchise       Float
+  description     String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  insurer         Insurer  @relation(fields: [insurerId], references: [id])
+  offerFeatures   OfferFeature[]
+  quoteOffers     QuoteOffer[]
+  
+  @@index([insurerId])
+  @@index([coverageLevel])
+  @@index([monthlyPrice])
+}
+
+// Caractéristiques des offres
+model OfferFeature {
+  id              String   @id @default(cuid())
+  offerId         String
+  featureName     String
+  featureType     String   // "included", "optional"
+  featureValue    String?
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  offer           InsuranceOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  @@unique([offerId, featureName])
+  @@index([offerId])
+}
+
+// Devis générés
+model Quote {
+  id              String   @id @default(cuid())
+  userId          String?
+  assureId        String?
+  quoteReference  String   @unique
+  status          String   @default("pending") // "pending", "sent", "contacted", "converted"
+  contactMethod   String?  // "email", "whatsapp", "telephone"
+  
+  // Données du formulaire
+  nom             String
+  prenom          String
+  email           String?
+  telephone       String
+  dateNaissance   DateTime?
+  datePermis      DateTime?
+  antecedentsSinistres Boolean?
+  nombreSinistres Int?
+  typeSinistres   String?  // JSON array
+  usagePrincipal  String?
+  kilometrageAnnuel String?
+  
+  // Données véhicule
+  energie         String?
+  puissanceFiscale String?
+  nombrePlaces    String?
+  dateMiseCirculation DateTime?
+  valeurNeuve     Float?
+  valeurVenale    Float?
+  usageVehicule   String?
+  
+  // Besoins assurance
+  typeCouverture  String?
+  dateEffet       DateTime?
+  dureeContrat    Int?
+  options         String?  // JSON array
+  niveauFranchise String?
+  preferenceContact String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User?   @relation(fields: [userId], references: [id])
+  assure          Assure? @relation(fields: [assureId], references: [id])
+  quoteOffers     QuoteOffer[]
+  
+  @@index([userId])
+  @@index([assureId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Offres incluses dans un devis
+model QuoteOffer {
+  id              String   @id @default(cuid())
+  quoteId         String
+  offerId         String
+  priceAtQuote    Float
+  selected        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  quote           Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  offer           InsuranceOffer @relation(fields: [offerId], references: [id])
+  
+  @@unique([quoteId, offerId])
+  @@index([quoteId])
+  @@index([offerId])
+}
+
+// Analytics et tracking
+model UserAnalytics {
+  id              String   @id @default(cuid())
+  userId          String?
+  eventType       String   // "page_view", "cta_click", "form_start", "form_complete", "quote_request", "contact_request"
+  eventData       String?  // JSON object
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+  
+  // Relations
+  user            User?   @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+// Configuration des tarifs (pour mise à jour facile)
+model PricingConfig {
+  id              String   @id @default(cuid())
+  insurerId       String
+  coverageLevel   String
+  basePrice       Float
+  ageFactor       Float    @default(1.0)
+  vehicleAgeFactor Float   @default(1.0)
+  powerFactor     Float    @default(1.0)
+  franchiseFactor Float    @default(1.0)
+  isActive        Boolean  @default(true)
+  validFrom       DateTime
+  validTo         DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([insurerId, coverageLevel])
+  @@index([isActive])
+  @@index([validFrom, validTo])
+}

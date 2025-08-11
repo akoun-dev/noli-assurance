@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": {
+      "required": true
+    },
+    "NEXTAUTH_SECRET": {
+      "required": true
+    },
+    "NEXTAUTH_URL": {
+      "required": true
+    }
+  },
+  "build": {
+    "env": {
+      "NEXTAUTH_URL": "https://your-domain.vercel.app"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "functions": {
+    "app/**/*.tsx": {
+      "maxDuration": 30
+    },
+    "app/api/**/*.tsx": {
+      "maxDuration": 60
+    }
+  },
+  "crons": []
+}
