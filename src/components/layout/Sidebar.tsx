@@ -108,11 +108,6 @@ export function Sidebar({ className }: SidebarProps) {
         icon: Building2,
       },
       {
-        title: 'Créer un assureur',
-        href: '/creer-assureur',
-        icon: UserCheck,
-      },
-      {
         title: 'Statistiques',
         href: '/statistiques',
         icon: TrendingUp,
