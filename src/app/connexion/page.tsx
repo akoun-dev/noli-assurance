@@ -196,22 +196,6 @@ function ConnexionContent() {
                     </Button>
                   </motion.div>
                 </div>
-                
-                {/* Informations de connexion */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                  <div className="flex items-start">
-                    <Shield className="h-4 w-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
-                    <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">Informations de connexion :</p>
-                      <ul className="space-y-1 text-xs">
-                        <li>• Utilisateur : user@demo.com</li>
-                        <li>• Assureur : assureur@demo.com</li>
-                        <li>• Administrateur : admin@demo.com</li>
-                        <li>• Mot de passe : password123</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <div className="relative">
