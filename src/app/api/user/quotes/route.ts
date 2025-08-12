@@ -6,7 +6,7 @@ import supabase from '@/lib/supabase'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Accès non autorisé' },
@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
         *,
         quoteOffers(
           *,
-          offer(
+          offer:InsuranceOffer(
             *,
-            insurer(name)
+            insurer:insurers(name)
           )
         )
       `)
@@ -32,7 +32,10 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Error fetching user quotes:', error)
       return NextResponse.json(
-        { success: false, error: 'Une erreur est survenue lors de la récupération des devis' },
+        {
+          success: false,
+          error: 'Une erreur est survenue lors de la récupération des devis'
+        },
         { status: 500 }
       )
     }
@@ -41,11 +44,13 @@ export async function GET(request: NextRequest) {
       success: true,
       quotes
     })
-
   } catch (error) {
     console.error('Error fetching user quotes:', error)
     return NextResponse.json(
-      { success: false, error: 'Une erreur est survenue lors de la récupération des devis' },
+      {
+        success: false,
+        error: 'Une erreur est survenue lors de la récupération des devis'
+      },
       { status: 500 }
     )
   }
