@@ -1,13 +1,11 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
+import { SupabaseAdapter } from "@auth/supabase-adapter"
+import { supabase } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient()
-
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
+  adapter: SupabaseAdapter(supabase) as any,
   secret: process.env.NEXTAUTH_SECRET || "votre-secret-par-defaut-a-changer-en-production",
   providers: [
     CredentialsProvider({
@@ -21,13 +19,13 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
+        const { data: user, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", credentials.email)
+          .single()
 
-        if (!user) {
+        if (error || !user) {
           return null
         }
 
