@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import supabase from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,21 +14,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        nom: true,
-        prenom: true,
-        email: true,
-        telephone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, nom, prenom, email, telephone, role, createdAt, updatedAt')
+      .order('createdAt', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching users:', error)
+      return NextResponse.json(
+        { success: false, error: 'Une erreur est survenue lors de la récupération des utilisateurs' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
