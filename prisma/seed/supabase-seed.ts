@@ -143,7 +143,7 @@ async function main() {
 
     const offersWithInsurer = entry.offers.map((o) => ({ ...o, insurerId: insurer.id }))
     const { error: offersError } = await supabase
-      .from('insuranceOffers')
+      .from('InsuranceOffer')
       .insert(offersWithInsurer)
     if (offersError) throw offersError
   }
