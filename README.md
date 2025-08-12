@@ -72,6 +72,18 @@ npm start
 
 Open [http://localhost:3000](http://localhost:3000) to see your application running.
 
+## 🗃️ Database Seed
+
+After exporting the required Supabase environment variables, you can seed the database:
+
+```bash
+export NEXT_PUBLIC_SUPABASE_URL="https://<your-project>.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="<your-service-role-key>"
+node scripts/supabase-seed.ts
+```
+
+This populates your Supabase project with demo data.
+
 ## 🤖 Powered by Z.ai
 
 This scaffold is optimized for use with [Z.ai](https://chat.z.ai) - your AI assistant for:
