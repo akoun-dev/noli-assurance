@@ -1,183 +1,159 @@
-# Guide de Déploiement - NOLI Motor
+# Déploiement sur Serveur Dédié avec PM2
 
 ## Prérequis
+- Serveur Linux (Ubuntu/Debian recommandé)
+- Node.js v18+
+- NPM v9+
+- PM2 installé globalement (`npm install -g pm2`)
+- Git installé
 
-- Node.js 18+ 
-- npm ou yarn
-- Compte sur plateforme de déploiement (Vercel, Netlify, etc.)
-- Base de données (SQLite pour développement, PostgreSQL/MySQL pour production)
+## 1. Installation des dépendances
 
-## 1. Configuration des variables d'environnement
-
-### Développement (.env.development)
 ```bash
-cp .env.development .env
+# Mettre à jour les paquets
+sudo apt update && sudo apt upgrade -y
+
+# Installer Node.js et NPM
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Vérifier les versions
+node -v
+npm -v
+
+# Installer PM2 globalement
+sudo npm install -g pm2
 ```
 
-### Production (.env.production)
-```bash
-# Base de données
-DATABASE_URL="postgresql://username:password@hostname:port/database"
-
-# NextAuth.js
-NEXTAUTH_SECRET="GENERATE_A_SECURE_SECRET_HERE_MINIMUM_32_CHARACTERS"
-NEXTAUTH_URL="https://votre-domaine.com"
-
-# Email (optionnel)
-EMAIL_SERVER_HOST="smtp.votreserveur.com"
-EMAIL_SERVER_PORT=587
-EMAIL_SERVER_USER="votre_email@votreserveur.com"
-EMAIL_SERVER_PASSWORD="votre_mot_de_passe_email"
-EMAIL_FROM="noreply@votre-domaine.com"
-```
-
-## 2. Migration de la base de données
-
-### Pour le développement (SQLite) :
-```bash
-# Appliquer le schéma
-npx prisma db push
-
-# Générer le client Prisma
-npx prisma generate
-
-# Peupler la base de données
-npx prisma db seed
-```
-
-### Pour la production (PostgreSQL/MySQL) :
-```bash
-# Appliquer les migrations
-npx prisma migrate deploy
-
-# Générer le client Prisma
-npx prisma generate
-
-# Peupler la base de données (optionnel)
-npx prisma db seed
-```
-
-## 3. Build de l'application
+## 2. Configuration du Projet
 
 ```bash
+# Cloner le dépôt
+git clone https://github.com/votre-repo/noli.git
+cd noli
+
 # Installer les dépendances
 npm install
 
+# Créer le fichier .env de production
+cp .env.example .env.production
+nano .env.production  # Éditer avec vos configurations
+```
+
+## 3. Build de l'Application
+
+```bash
 # Build de production
 npm run build
 
-# Lancer en production localement pour tester
-npm start
+# Vérifier que le build s'est bien passé
+ls -la .next/
 ```
 
-## 4. Options de déploiement
+## 4. Configuration PM2
 
-### Option A: Vercel (recommandé)
+Créer un fichier `ecosystem.config.js` à la racine :
 
-1. **Connecter votre dépôt GitHub à Vercel**
-2. **Configurer les variables d'environnement** dans le dashboard Vercel
-3. **Déployer automatiquement** à chaque push sur la branche principale
+```javascript
+module.exports = {
+  apps: [{
+    name: 'noli-app',
+    script: 'node_modules/next/dist/bin/next',
+    args: 'start',
+    instances: 'max',
+    exec_mode: 'cluster',
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3000
+    }
+  }]
+};
+```
 
-Configuration recommandée :
-```json
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install"
+## 5. Démarrage avec PM2
+
+```bash
+# Démarrer l'application
+pm2 start ecosystem.config.js
+
+# Configurer le démarrage automatique
+pm2 startup
+pm2 save
+
+# Vérifier le statut
+pm2 status
+pm2 logs
+```
+
+## 6. Configuration Nginx (Optionnel)
+
+```bash
+sudo apt install -y nginx
+sudo nano /etc/nginx/sites-available/noli
+```
+
+Ajouter cette configuration :
+
+```nginx
+server {
+    listen 80;
+    server_name votredomaine.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
 }
 ```
 
-### Option B: Docker
+Activer la configuration :
 
-1. **Construire l'image** :
 ```bash
-docker build -t noli-motor .
+sudo ln -s /etc/nginx/sites-available/noli /etc/nginx/sites-enabled
+sudo nginx -t
+sudo systemctl restart nginx
 ```
 
-2. **Lancer le conteneur** :
+## 7. Commandes PM2 Utiles
+
 ```bash
-docker run -p 3000:3000 --env-file .env.production noli-motor
-```
-
-### Option C: Serveur dédié
-
-1. **Uploader les fichiers** sur le serveur
-2. **Installer les dépendances** : `npm install --production`
-3. **Build l'application** : `npm run build`
-4. **Lancer avec PM2** :
-```bash
-npm install -g pm2
-pm2 start npm --name "noli-motor" -- start
-```
-
-## 5. Post-déploiement
-
-### Vérifications essentielles :
-- [ ] L'application est accessible sur votre domaine
-- [ ] Les pages principales fonctionnent (accueil, connexion, inscription)
-- [ ] Le formulaire de comparaison fonctionne
-- [ ] Les tableaux de bord s'affichent correctement
-- [ ] Les emails sont envoyés (si configuré)
-- [ ] La base de données est accessible
-
-### Monitoring :
-- Configurer les logs de production
-- Mettre en place le monitoring des erreurs
-- Surveiller les performances
-
-## 6. Maintenance
-
-### Mises à jour :
-```bash
-# Pull des dernières modifications
-git pull origin main
-
-# Mise à jour des dépendances
-npm install
-
-# Migration de la base de données si nécessaire
-npx prisma migrate deploy
+# Surveiller les logs
+pm2 logs
 
 # Redémarrer l'application
-pm2 restart noli-motor
+pm2 restart noli-app
+
+# Arrêter l'application
+pm2 stop noli-app
+
+# Supprimer de PM2
+pm2 delete noli-app
+
+# Monitorer les performances
+pm2 monit
 ```
 
-### Sauvegardes :
-- Sauvegarder régulièrement la base de données
-- Sauvegarder les fichiers uploadés
-- Tester la restauration des sauvegardes
+## 8. Mises à Jour
 
-## 7. Sécurité
+Pour déployer une nouvelle version :
 
-### En production :
-- [ ] Utiliser HTTPS
-- [ ] Configurer les headers de sécurité
-- [ ] Mettre en place le rate limiting
-- [ ] Utiliser des variables d'environnement pour les secrets
-- [ ] Ne jamais exposer les clés d'API dans le code client
-
-### Base de données :
-- [ ] Utiliser des mots de passe forts
-- [ ] Restreindre l'accès à la base de données
-- [ ] Configurer les backups automatiques
-
-## 8. Dépannage
-
-### Problèmes courants :
-1. **Build échoue** : Vérifier les dépendances et les variables d'environnement
-2. **Base de données inaccessible** : Vérifier la chaîne de connexion et les permissions
-3. **Pages 404** : Vérifier le routage et la configuration du déploiement
-4. **Lent** : Optimiser les images et utiliser le caching
-
-### Logs :
 ```bash
-# Voir les logs de l'application
-pm2 logs noli-motor
-
-# Voir les logs de la base de données
-# Vérifier les logs de votre service de base de données
+git pull origin main
+npm install
+npm run build
+pm2 restart noli-app
 ```
 
-## Support
+## Sécurité Recommandée
 
-Pour toute question ou problème, contactez l'équipe de développement.
+- Configurer un firewall (UFW)
+- Utiliser HTTPS avec Let's Encrypt
+- Mettre à jour régulièrement les dépendances
+- Configurer des sauvegardes automatiques

@@ -123,5 +123,3 @@ public/
 # Temporary folders
 tmp/
 temp/
-# Fichier de configuration Netlify
-.env.netlify

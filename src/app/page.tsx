@@ -364,4 +364,73 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card className="hover:shadow-xl transition-all duration-300 border-2 border-blue-200 bg-white relative overflow-hidden group">
+                <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Shield className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-blue-600">Assurance Habitation</CardTitle>
+                  <CardDescription className="text-gray-600">Protégez votre logement et vos biens</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">15 000 FCFA</div>
+                  <div className="text-sm text-gray-500 mb-4">/ an</div>
+                  <div className="space-y-2 mb-6">
+                    <div className="text-sm text-gray-700">✓ Incendie et dégâts des eaux</div>
+                    <div className="text-sm text-gray-700">✓ Vol et vandalisme</div>
+                    <div className="text-sm text-gray-700">✓ Responsabilité civile</div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold"
+                    onClick={() => trackEvent('service_click', { service: 'assurance_habitation', location: 'services_grid' })}
+                  >
+                    Comparer les offres
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Assurance Santé */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Card className="hover:shadow-xl transition-all duration-300 border-2 border-blue-200 bg-white relative overflow-hidden group">
+                <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardHeader className="text-center pb-4">
+                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Zap className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-blue-600">Assurance Santé</CardTitle>
+                  <CardDescription className="text-gray-600">Couverture médicale complète</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">30 000 FCFA</div>
+                  <div className="text-sm text-gray-500 mb-4">/ an</div>
+                  <div className="space-y-2 mb-6">
+                    <div className="text-sm text-gray-700">✓ Hospitalisation</div>
+                    <div className="text-sm text-gray-700">✓ Consultations</div>
+                    <div className="text-sm text-gray-700">✓ Médicaments</div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold"
+                    onClick={() => trackEvent('service_click', { service: 'assurance_sante', location: 'services_grid' })}
+                  >
+                    Comparer les offres
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
