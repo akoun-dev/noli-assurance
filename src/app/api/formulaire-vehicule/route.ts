@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,9 +50,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si l'assuré existe
-    const assure = await db.assure.findUnique({
-      where: { id: assureId }
-    })
+    const { data: assure, error: assureError } = await supabase
+      .from('assures')
+      .select('*')
+      .eq('id', assureId)
+      .single()
+
+    if (assureError) {
+      throw assureError
+    }
 
     if (!assure) {
       return NextResponse.json(
@@ -67,19 +72,16 @@ export async function POST(request: NextRequest) {
     // ou les ajouter à l'assuré si nécessaire
     
     // Créer un devis avec les informations du véhicule
-    const quote = await db.quote.create({
-      data: {
+    const { data: quote, error } = await supabase
+      .from('Quote')
+      .insert({
         assureId: assureId,
         quoteReference: `DEVIS-${Date.now()}`,
         status: 'pending',
-        
-        // Informations de l'assuré
         nom: assure.nom,
         prenom: assure.prenom,
         email: assure.email,
         telephone: assure.telephone,
-        
-        // Données véhicule
         energie,
         puissanceFiscale,
         nombrePlaces,
@@ -87,11 +89,13 @@ export async function POST(request: NextRequest) {
         valeurNeuve: valeurNeuveNum,
         valeurVenale: valeurVenaleNum,
         usageVehicule,
-        
         createdAt: new Date(),
         updatedAt: new Date()
-      }
-    })
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     return NextResponse.json({
       message: 'Informations du véhicule enregistrées avec succès',

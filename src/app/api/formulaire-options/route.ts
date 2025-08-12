@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,9 +37,15 @@ export async function POST(request: NextRequest) {
     const isoDate = new Date(`${year}-${month}-${day}`)
 
     // Vérifier si l'assuré existe
-    const assure = await db.assure.findUnique({
-      where: { id: assureId }
-    })
+    const { data: assure, error: assureError } = await supabase
+      .from('assures')
+      .select('*')
+      .eq('id', assureId)
+      .single()
+
+    if (assureError) {
+      throw assureError
+    }
 
     if (!assure) {
       return NextResponse.json(
@@ -53,15 +58,16 @@ export async function POST(request: NextRequest) {
 
     if (quoteId) {
       // Vérifier d'abord si le devis existe
-      const existingQuote = await db.quote.findUnique({
-        where: { id: quoteId }
-      })
+      const { data: existingQuote } = await supabase
+        .from('Quote')
+        .select('id')
+        .eq('id', quoteId)
+        .maybeSingle()
 
       if (existingQuote) {
-        // Mettre à jour le devis existant
-        quote = await db.quote.update({
-          where: { id: quoteId },
-          data: {
+        const { data: updatedQuote } = await supabase
+          .from('Quote')
+          .update({
             typeCouverture,
             dateEffet: isoDate,
             dureeContrat: parseInt(dureeContrat),
@@ -69,12 +75,15 @@ export async function POST(request: NextRequest) {
             options: JSON.stringify(options || []),
             status: 'pending',
             updatedAt: new Date()
-          }
-        })
+          })
+          .eq('id', quoteId)
+          .select()
+          .single()
+        quote = updatedQuote
       } else {
-        // Créer un nouveau devis si l'ID existant n'est pas valide
-        quote = await db.quote.create({
-          data: {
+        const { data: createdQuote } = await supabase
+          .from('Quote')
+          .insert({
             assureId: assureId,
             quoteReference: `DEVIS-${Date.now()}`,
             status: 'pending',
@@ -89,66 +98,61 @@ export async function POST(request: NextRequest) {
             options: JSON.stringify(options || []),
             createdAt: new Date(),
             updatedAt: new Date()
-          }
-        })
+          })
+          .select()
+          .single()
+        quote = createdQuote
       }
     } else {
-      // Créer un nouveau devis (cas improbable mais possible)
-      quote = await db.quote.create({
-        data: {
+      const { data: createdQuote } = await supabase
+        .from('Quote')
+        .insert({
           assureId: assureId,
           quoteReference: `DEVIS-${Date.now()}`,
           status: 'pending',
-          
-          // Informations de l'assuré
           nom: assure.nom,
           prenom: assure.prenom,
           email: assure.email,
           telephone: assure.telephone,
-          
-          // Options d'assurance
           typeCouverture,
           dateEffet: isoDate,
           dureeContrat: parseInt(dureeContrat),
           niveauFranchise,
           options: JSON.stringify(options || []),
-          
           createdAt: new Date(),
           updatedAt: new Date()
-        }
-      })
+        })
+        .select()
+        .single()
+      quote = createdQuote
     }
 
     // Récupérer les offres d'assurance disponibles qui correspondent aux critères
-    const insuranceOffers = await db.insuranceOffer.findMany({
-      where: {
-        coverageLevel: typeCouverture,
-        isActive: true
-      },
-      include: {
-        insurer: true,
-        offerFeatures: true
-      },
-      orderBy: {
-        monthlyPrice: 'asc'
-      }
-    })
+    const { data: insuranceOffers, error: offersError } = await supabase
+      .from('InsuranceOffer')
+      .select('*, insurer:insurers(*), offerFeatures:OfferFeature(*)')
+      .eq('coverageLevel', typeCouverture)
+      .eq('isActive', true)
+      .order('monthlyPrice', { ascending: true })
+
+    if (offersError) throw offersError
 
     // Créer les offres associées au devis
     const quoteOffers = await Promise.all(
-      insuranceOffers.map(async (offer) => {
-        // Calculer le prix en fonction des caractéristiques du véhicule et des options
-        // Pour l'instant, on utilise le prix de base, mais on pourrait ajouter une logique de calcul plus complexe
+      insuranceOffers.map(async (offer: any) => {
         const calculatedPrice = offer.monthlyPrice
 
-        return await db.quoteOffer.create({
-          data: {
+        const { data: qo } = await supabase
+          .from('QuoteOffer')
+          .insert({
             quoteId: quote.id,
             offerId: offer.id,
             priceAtQuote: calculatedPrice,
             createdAt: new Date()
-          }
-        })
+          })
+          .select()
+          .single()
+        return qo
       })
     )
 

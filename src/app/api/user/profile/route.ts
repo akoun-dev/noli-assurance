@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
 export async function PUT(request: NextRequest) {
   try {
@@ -21,27 +20,21 @@ export async function PUT(request: NextRequest) {
     }
 
     // Mettre à jour le profil utilisateur
-    const updatedUser = await db.user.update({
-      where: { id: session.user.id },
-      data: {
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update({
         nom,
         prenom,
         email,
         telephone,
         dateNaissance: dateNaissance ? new Date(dateNaissance) : null,
-        datePermis: datePermis ? new Date(datePermis) : null,
-      },
-      select: {
-        id: true,
-        nom: true,
-        prenom: true,
-        email: true,
-        telephone: true,
-        dateNaissance: true,
-        datePermis: true,
-        role: true,
-      }
-    })
+        datePermis: datePermis ? new Date(datePermis) : null
+      })
+      .eq('id', session.user.id)
+      .select('id, nom, prenom, email, telephone, dateNaissance, datePermis, role')
+      .single()
+
+    if (error) throw error
 
     return NextResponse.json(updatedUser)
   } catch (error) {
@@ -61,21 +54,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        nom: true,
-        prenom: true,
-        email: true,
-        telephone: true,
-        dateNaissance: true,
-        datePermis: true,
-        role: true,
-      }
-    })
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, nom, prenom, email, telephone, dateNaissance, datePermis, role')
+      .eq('id', session.user.id)
+      .single()
 
-    if (!user) {
+    if (error || !user) {
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
     }
 

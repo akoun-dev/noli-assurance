@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,25 +34,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer ou mettre à jour l'assuré dans la base de données
-    const assure = await db.assure.upsert({
-      where: { email },
-      update: {
-        nom,
-        prenom,
-        telephone,
-        isWhatsApp,
-        updatedAt: new Date()
-      },
-      create: {
-        nom,
-        prenom,
-        email,
-        telephone,
-        isWhatsApp,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    })
+    const { data: assure, error } = await supabase
+      .from('assures')
+      .upsert(
+        {
+          nom,
+          prenom,
+          email,
+          telephone,
+          isWhatsApp,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        { onConflict: 'email' }
+      )
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
 
     return NextResponse.json({
       message: 'Informations de l\'assuré enregistrées avec succès',
