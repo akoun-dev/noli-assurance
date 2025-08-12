@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,10 +49,17 @@ export async function GET(request: NextRequest) {
 
     // Format commun pour toutes les statistiques
     const getCommonStats = async (): Promise<CommonStats> => {
-      const [totalQuotes, acceptedQuotes] = await Promise.all([
-        db.quote.count(),
-        db.quote.count({ where: { status: 'converted' } })
+      const [totalQuotesResult, acceptedQuotesResult] = await Promise.all([
+        supabase
+          .from('Quote')
+          .select('*', { count: 'exact', head: true }),
+        supabase
+          .from('Quote')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'converted')
       ])
+      const totalQuotes = totalQuotesResult.count || 0
+      const acceptedQuotes = acceptedQuotesResult.count || 0
 
       // Calcul du taux de conversion
       const conversionRate = totalQuotes > 0
@@ -61,12 +67,16 @@ export async function GET(request: NextRequest) {
         : 0
 
       // Calcul du chiffre d'affaires (exemple simplifié)
-      const revenueResult = await db.quoteOffer.aggregate({
-        where: { selected: true },
-        _sum: { priceAtQuote: true }
-      })
-      const revenue = revenueResult._sum.priceAtQuote
-        ? `${(revenueResult._sum.priceAtQuote / 1000000).toFixed(1)}M`
+      const { data: revenueRows } = await supabase
+        .from('QuoteOffer')
+        .select('priceAtQuote')
+        .eq('selected', true)
+      const revenueTotal = (revenueRows || []).reduce(
+        (sum, row) => sum + (row.priceAtQuote || 0),
+        0
+      )
+      const revenue = revenueTotal
+        ? `${(revenueTotal / 1000000).toFixed(1)}M`
         : '0'
 
       // Données mensuelles (6 derniers mois)
@@ -97,44 +107,57 @@ export async function GET(request: NextRequest) {
         const startDate = new Date(now.getFullYear(), now.getMonth() - i, 1)
         const endDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
         
-        const [quotes, accepted] = await Promise.all([
-          db.quote.count({
-            where: { createdAt: { gte: startDate, lte: endDate } }
-          }),
-          db.quote.count({
-            where: {
-              createdAt: { gte: startDate, lte: endDate },
-              status: 'converted'
-            }
-          })
+        const [quoteResult, acceptedResult] = await Promise.all([
+          supabase
+            .from('Quote')
+            .select('*', { count: 'exact', head: true })
+            .gte('createdAt', startDate.toISOString())
+            .lte('createdAt', endDate.toISOString()),
+          supabase
+            .from('Quote')
+            .select('*', { count: 'exact', head: true })
+            .gte('createdAt', startDate.toISOString())
+            .lte('createdAt', endDate.toISOString())
+            .eq('status', 'converted')
         ])
-
-        const monthStat: MonthlyStat = {
+        const quotes = quoteResult.count || 0
+        const accepted = acceptedResult.count || 0
+        months.push({
           month: startDate.toLocaleString('fr-FR', { month: 'short' }),
           quotes,
           accepted
-        }
-        months.push(monthStat)
+        })
       }
 
       return months
     }
 
     const getTopOffers = async () => {
-      const offers = await db.insuranceOffer.findMany({
-        take: 3,
-        orderBy: { quoteOffers: { _count: 'desc' } },
-        select: {
-          name: true,
-          _count: { select: { quoteOffers: true } }
-        }
+      const { data: quoteOffers } = await supabase
+        .from('QuoteOffer')
+        .select('offerId')
+      const counts: Record<string, number> = {}
+      ;(quoteOffers || []).forEach(qo => {
+        counts[qo.offerId] = (counts[qo.offerId] || 0) + 1
       })
-
-      return offers.map(offer => ({
-        name: offer.name,
-        quotes: offer._count.quoteOffers,
-        conversion: Math.floor(Math.random() * 30) + 10 // À remplacer par un vrai calcul
-      }))
+      const topIds = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+      const topOffers = await Promise.all(
+        topIds.map(async ([id, count]) => {
+          const { data } = await supabase
+            .from('InsuranceOffer')
+            .select('name')
+            .eq('id', id)
+            .single()
+          return {
+            name: data?.name || '',
+            quotes: count,
+            conversion: Math.floor(Math.random() * 30) + 10
+          }
+        })
+      )
+      return topOffers
     }
 
     switch (userRole) {
@@ -144,17 +167,23 @@ export async function GET(request: NextRequest) {
         const commonStats = await getCommonStats()
         
         if (userRole === 'ADMIN') {
-          const [totalUsers, activeInsurers, lastMonthUsers] = await Promise.all([
-            db.user.count(),
-            db.insuranceOffer.count({ where: { isActive: true } }),
-            db.user.count({
-              where: {
-                createdAt: {
-                  gte: new Date(new Date().setMonth(new Date().getMonth() - 1))
-                }
-              }
-            })
+          const [totalUsersRes, activeInsurersRes, lastMonthUsersRes] = await Promise.all([
+            supabase.from('users').select('*', { count: 'exact', head: true }),
+            supabase
+              .from('InsuranceOffer')
+              .select('*', { count: 'exact', head: true })
+              .eq('isActive', true),
+            supabase
+              .from('users')
+              .select('*', { count: 'exact', head: true })
+              .gte(
+                'createdAt',
+                new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString()
+              )
           ])
+          const totalUsers = totalUsersRes.count || 0
+          const activeInsurers = activeInsurersRes.count || 0
+          const lastMonthUsers = lastMonthUsersRes.count || 0
           
           return NextResponse.json({
             ...commonStats,

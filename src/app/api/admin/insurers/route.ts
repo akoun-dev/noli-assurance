@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 import bcrypt from 'bcryptjs'
 
 interface CreateInsurerData {
@@ -54,9 +53,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si l'email existe déjà
-    const existingUser = await db.user.findUnique({
-      where: { email: data.email }
-    })
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', data.email)
+      .maybeSingle()
 
     if (existingUser) {
       return NextResponse.json(
@@ -66,9 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier si le nom d'entreprise existe déjà
-    const existingInsurer = await db.insurer.findUnique({
-      where: { nomEntreprise: data.nomEntreprise }
-    })
+    const { data: existingInsurer } = await supabase
+      .from('insurers')
+      .select('id')
+      .eq('nomEntreprise', data.nomEntreprise)
+      .maybeSingle()
 
     if (existingInsurer) {
       return NextResponse.json(
@@ -82,20 +85,26 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(temporaryPassword, 12)
 
     // Créer l'utilisateur assureur
-    const newUser = await db.user.create({
-      data: {
+    const { data: newUser, error: userError } = await supabase
+      .from('users')
+      .insert({
         email: data.email,
-        name: `${data.prenom} ${data.nom}`,
+        nom: data.nom,
+        prenom: data.prenom,
         password: hashedPassword,
         role: 'INSURER',
         telephone: data.telephone,
-        emailVerified: new Date(),
-      }
-    })
+        emailVerified: new Date()
+      })
+      .select()
+      .single()
+
+    if (userError) throw userError
 
     // Créer l'assureur
-    const newInsurer = await db.insurer.create({
-      data: {
+    const { data: newInsurer, error: insurerError } = await supabase
+      .from('insurers')
+      .insert({
         userId: newUser.id,
         nom: data.nom,
         prenom: data.prenom,
@@ -113,8 +122,12 @@ export async function POST(request: NextRequest) {
         description: data.description || null,
         statut: 'ACTIF',
         dateCreation: new Date(),
-      }
-    })
+        updatedAt: new Date()
+      })
+      .select()
+      .single()
+
+    if (insurerError) throw insurerError
 
     // Ici, vous pourriez ajouter l'envoi d'un email avec les identifiants temporaires
     // Pour l'instant, on retourne le mot de passe temporaire dans la réponse (à enlever en production)
@@ -154,20 +167,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Récupérer tous les assureurs
-    const insurers = await db.insurer.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            createdAt: true,
-          }
-        }
-      },
-      orderBy: {
-        dateCreation: 'desc'
-      }
-    })
+    const { data: insurers, error } = await supabase
+      .from('insurers')
+      .select('*, user:users(id, email, createdAt)')
+      .order('dateCreation', { ascending: false })
+
+    if (error) throw error
 
     return NextResponse.json({
       success: true,

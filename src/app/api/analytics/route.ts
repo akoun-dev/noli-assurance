@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
 interface AnalyticsEvent {
   eventType: 'page_view' | 'cta_click' | 'form_start' | 'form_complete' | 'quote_request' | 'contact_request'
@@ -16,15 +15,19 @@ export async function POST(request: NextRequest) {
     const { eventType, eventData, userId, ipAddress, userAgent } = body
     
     // Créer l'événement analytics
-    const analyticsEvent = await db.userAnalytics.create({
-      data: {
+    const { data: analyticsEvent, error } = await supabase
+      .from('UserAnalytics')
+      .insert({
         eventType,
         eventData: eventData ? JSON.stringify(eventData) : null,
         userId: userId || null,
         ipAddress: ipAddress || request.ip || null,
         userAgent: userAgent || request.headers.get('user-agent') || null
-      }
-    })
+      })
+      .select()
+      .single()
+
+    if (error) throw error
     
     return NextResponse.json({
       success: true,
@@ -48,33 +51,27 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
     
-    const whereClause: any = {}
-    
+    let query = supabase
+      .from('UserAnalytics')
+      .select('*')
+      .order('createdAt', { ascending: false })
+      .limit(1000)
+
     if (eventType) {
-      whereClause.eventType = eventType
+      query = query.eq('eventType', eventType)
     }
-    
     if (userId) {
-      whereClause.userId = userId
+      query = query.eq('userId', userId)
     }
-    
-    if (startDate || endDate) {
-      whereClause.createdAt = {}
-      if (startDate) {
-        whereClause.createdAt.gte = new Date(startDate)
-      }
-      if (endDate) {
-        whereClause.createdAt.lte = new Date(endDate)
-      }
+    if (startDate) {
+      query = query.gte('createdAt', startDate)
     }
-    
-    const events = await db.userAnalytics.findMany({
-      where: whereClause,
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 1000 // Limiter à 1000 événements pour éviter les surcharges
-    })
+    if (endDate) {
+      query = query.lte('createdAt', endDate)
+    }
+
+    const { data: events, error } = await query
+    if (error) throw error
     
     // Agréger les données pour le dashboard
     const aggregatedData = {
@@ -90,7 +87,7 @@ export async function GET(request: NextRequest) {
         (aggregatedData.eventsByType[event.eventType] || 0) + 1
       
       // Compter par jour
-      const day = event.createdAt.toISOString().split('T')[0]
+      const day = new Date(event.createdAt).toISOString().split('T')[0]
       aggregatedData.eventsByDay[day] = 
         (aggregatedData.eventsByDay[day] || 0) + 1
     })

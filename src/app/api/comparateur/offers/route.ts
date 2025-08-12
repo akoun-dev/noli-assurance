@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
 interface ComparisonRequest {
   // Profil conducteur
@@ -39,18 +38,13 @@ export async function POST(request: NextRequest) {
     console.log('Données reçues:', JSON.stringify(body, null, 2))
     
     // Récupérer toutes les offres actives
-    const offers = await db.insuranceOffer.findMany({
-      where: {
-        isActive: true
-      },
-      include: {
-        insurer: true,
-        offerFeatures: true
-      },
-      orderBy: {
-        monthlyPrice: 'asc'
-      }
-    })
+    const { data: offers, error } = await supabase
+      .from('InsuranceOffer')
+      .select('*, insurer:insurers(*), offerFeatures:OfferFeature(*)')
+      .eq('isActive', true)
+      .order('monthlyPrice', { ascending: true })
+
+    if (error) throw error
     console.log('Offres récupérées depuis la base:', offers.length)
 
     // Filtrer et calculer les prix en fonction des critères
@@ -155,21 +149,19 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     // Récupérer toutes les offres actives pour le filtrage côté client
-    const offers = await db.insuranceOffer.findMany({
-      where: {
-        isActive: true
-      },
-      include: {
-        insurer: true,
-        offerFeatures: true
-      }
-    })
+    const { data: offers, error: offersError } = await supabase
+      .from('InsuranceOffer')
+      .select('*, insurer:insurers(*), offerFeatures:OfferFeature(*)')
+      .eq('isActive', true)
 
-    const insurers = await db.insurer.findMany({
-      where: {
-        statut: "ACTIF"
-      }
-    })
+    if (offersError) throw offersError
+
+    const { data: insurers, error: insurersError } = await supabase
+      .from('insurers')
+      .select('*')
+      .eq('statut', 'ACTIF')
+
+    if (insurersError) throw insurersError
 
     return NextResponse.json({
       success: true,
