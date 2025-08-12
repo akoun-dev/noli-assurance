@@ -1,33 +1,22 @@
-import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-const db: any = supabase
 
+import supabase from '@/lib/supabase'
 export async function GET() {
   try {
-    const quotes = await db.quote.findMany({
-      include: {
-        user: true,
-        assure: true,
-        quoteOffers: {
-          include: {
-            offer: {
-              include: {
-                insurer: true
-              }
-            }
-          },
-          where: {
-            selected: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    const { data: quotes, error } = await supabase
+      .from('quote')
+      .select('id, quoteReference, telephone, energie, puissanceFiscale, status, createdAt, user(*), assure(*), quoteOffers(selected, priceAtQuote, offer(*, insurer(*)))')
+      .order('createdAt', { ascending: false })
 
-    const formattedQuotes = quotes.map(quote => {
-      const selectedOffer = quote.quoteOffers[0]?.offer
+    if (error) {
+      console.error('Error fetching quotes:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch quotes' },
+        { status: 500 }
+      )
+    }
+
+    const formattedQuotes = (quotes || []).map((quote: any) => {
+      const selectedOffer = quote.quoteOffers?.[0]?.offer
       const client = quote.assure || quote.user
 
       return {
@@ -40,8 +29,8 @@ export async function GET() {
         offre: selectedOffer?.name || 'Offre non sélectionnée',
         assureur: selectedOffer?.insurer?.nomEntreprise || 'Assureur inconnu',
         status: quote.status,
-        createdAt: quote.createdAt.toISOString(),
-        prix: quote.quoteOffers[0]?.priceAtQuote !== undefined
+        createdAt: quote.createdAt,
+        prix: quote.quoteOffers?.[0]?.priceAtQuote !== undefined
           ? `${quote.quoteOffers[0].priceAtQuote.toLocaleString('fr-FR')} FCFA`
           : 'Non calculé'
       }
