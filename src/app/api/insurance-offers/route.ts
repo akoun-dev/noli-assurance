@@ -3,8 +3,8 @@ import supabase from '@/lib/supabase'
 export async function GET() {
   try {
     const { data: offers, error } = await supabase
-      .from('insuranceOffer')
-      .select('id, description, monthlyPrice, coverageLevel, isActive, createdAt, insurer:insurer(nomEntreprise)')
+      .from('InsuranceOffer')
+      .select('id, description, monthlyPrice, coverageLevel, isActive, createdAt, insurer:insurers(nomEntreprise)')
       .order('createdAt', { ascending: false })
 
     if (error) {
