@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { supabase } from '@/lib/supabase'
+const db: any = supabase
 
 interface AnalyticsEvent {
   eventType: 'page_view' | 'cta_click' | 'form_start' | 'form_complete' | 'quote_request' | 'contact_request'
