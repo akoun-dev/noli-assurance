@@ -1,9 +1,10 @@
 
+import { NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
 export async function GET() {
   try {
     const { data: quotes, error } = await supabase
-      .from('quote')
+      .from('Quote')
       .select('id, quoteReference, telephone, energie, puissanceFiscale, status, createdAt, user(*), assure(*), quoteOffers(selected, priceAtQuote, offer(*, insurer(*)))')
       .order('createdAt', { ascending: false })
 
