@@ -72,6 +72,21 @@ npm run db:generate
 npm run db:seed
 ```
 
+### Option 3: Supabase CLI
+
+Les migrations SQL sont stockées dans `supabase/migrations`. Installez la CLI si nécessaire :
+
+```bash
+npm install -g supabase
+```
+
+Pour réinitialiser votre base locale et appliquer les migrations :
+
+```bash
+supabase db reset --local
+supabase db push
+```
+
 ## Build de l'application
 
 ```bash
