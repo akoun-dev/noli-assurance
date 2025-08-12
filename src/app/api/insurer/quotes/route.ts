@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import supabase from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,23 +14,27 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const quotes = await prisma.quote.findMany({
-      include: {
-        quoteOffers: {
-          include: {
-            offer: {
-              select: {
-                name: true,
-                coverageLevel: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    const { data: quotes, error } = await supabase
+      .from('Quote')
+      .select(`
+        *,
+        quoteOffers(
+          *,
+          offer(
+            name,
+            coverageLevel
+          )
+        )
+      `)
+      .order('createdAt', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching quotes:', error)
+      return NextResponse.json(
+        { success: false, error: 'Une erreur est survenue lors de la récupération des devis' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,

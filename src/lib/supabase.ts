@@ -1,3 +1,4 @@
+
 import { createClient } from "@supabase/supabase-js";
 
 export const supabase = createClient(
@@ -5,3 +6,4 @@ export const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { persistSession: false } }
 );
+
