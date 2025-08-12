@@ -14,7 +14,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
-    "db:seed": "node prisma/seed/supabase-seed.ts"
+    "db:seed": "node scripts/supabase-seed.ts"
   },
   "dependencies": {
     "@auth/supabase-adapter": "^1.0.0",

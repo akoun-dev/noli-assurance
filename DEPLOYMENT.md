@@ -48,43 +48,30 @@ EMAIL_FROM="noreply@votre-domaine.com"
 
 ## Migration de la base de données
 
-### Option 1: SQLite (développement/test)
-```bash
-# Appliquer le schéma
-npm run db:push
+Les migrations SQL sont stockées dans `supabase/migrations` et sont gérées via la CLI Supabase.
 
-# Générer le client
-npm run db:generate
-
-# Peupler avec des données de test
-npm run db:seed
-```
-
-### Option 2: PostgreSQL (production)
-```bash
-# Appliquer les migrations
-npm run db:migrate:deploy
-
-# Générer le client
-npm run db:generate
-
-# Peupler avec des données initiales
-npm run db:seed
-```
-
-### Option 3: Supabase CLI
-
-Les migrations SQL sont stockées dans `supabase/migrations`. Installez la CLI si nécessaire :
+### Installer la CLI
 
 ```bash
 npm install -g supabase
 ```
 
-Pour réinitialiser votre base locale et appliquer les migrations :
+### Appliquer les migrations
+
+```bash
+supabase db push
+```
+
+### Réinitialiser la base locale
 
 ```bash
 supabase db reset --local
-supabase db push
+```
+
+### Peupler la base avec des données de test
+
+```bash
+npm run db:seed
 ```
 
 ## Build de l'application
@@ -321,10 +308,10 @@ pm2 restart noli-motor
 2. **Base de données inaccessible** :
    ```bash
    # Vérifier la connexion
-   npx prisma db pull
-   
+   supabase status
+
    # Vérifier les migrations
-   npx prisma migrate status
+   supabase db push
    ```
 
 3. **Pages 404** :
