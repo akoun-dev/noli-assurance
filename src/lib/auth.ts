@@ -5,8 +5,10 @@ import { supabase } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
-  adapter: SupabaseAdapter(supabase) as any,
+  // Temporarily disable adapter for debugging
+  // adapter: SupabaseAdapter(supabase) as any,
   secret: process.env.NEXTAUTH_SECRET || "votre-secret-par-defaut-a-changer-en-production",
+  debug: true,
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -76,6 +78,17 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/connexion",
-    signUp: "/inscription"
+    newUser: "/inscription"
+  },
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth error:', code, metadata);
+    },
+    warn(code) {
+      console.warn('NextAuth warning:', code);
+    },
+    debug(code, metadata) {
+      console.log('NextAuth debug:', code, metadata);
+    }
   }
 }

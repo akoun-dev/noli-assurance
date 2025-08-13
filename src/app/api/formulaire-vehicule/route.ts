@@ -71,10 +71,17 @@ export async function POST(request: NextRequest) {
     // Pour l'instant, on va stocker ces informations dans un devis temporaire
     // ou les ajouter à l'assuré si nécessaire
     
+    // Générer un ID unique pour le devis
+    const { v4: uuidv4 } = await import('uuid');
+    const quoteId = uuidv4();
+
+    console.log('Enregistrement devis avec ID:', quoteId);
+    
     // Créer un devis avec les informations du véhicule
     const { data: quote, error } = await supabase
       .from('Quote')
       .insert({
+        id: quoteId,
         assureId: assureId,
         quoteReference: `DEVIS-${Date.now()}`,
         status: 'pending',

@@ -54,18 +54,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const { v4: uuidv4 } = await import('uuid');
     let quote
+    const currentQuoteId = quoteId || uuidv4()
+
+    console.log('Traitement du devis avec ID:', currentQuoteId);
 
     if (quoteId) {
       // Vérifier d'abord si le devis existe
-      const { data: existingQuote } = await supabase
+      const { data: existingQuote, error: existingError } = await supabase
         .from('Quote')
         .select('id')
         .eq('id', quoteId)
         .maybeSingle()
 
+      if (existingError) {
+        console.error('Erreur vérification devis existant:', existingError);
+        throw existingError;
+      }
+
       if (existingQuote) {
-        const { data: updatedQuote } = await supabase
+        const { data: updatedQuote, error: updateError } = await supabase
           .from('Quote')
           .update({
             typeCouverture,
@@ -79,11 +88,17 @@ export async function POST(request: NextRequest) {
           .eq('id', quoteId)
           .select()
           .single()
+
+        if (updateError) {
+          console.error('Erreur mise à jour devis:', updateError);
+          throw updateError;
+        }
         quote = updatedQuote
       } else {
-        const { data: createdQuote } = await supabase
+        const { data: createdQuote, error: createError } = await supabase
           .from('Quote')
           .insert({
+            id: currentQuoteId,
             assureId: assureId,
             quoteReference: `DEVIS-${Date.now()}`,
             status: 'pending',
@@ -104,9 +119,10 @@ export async function POST(request: NextRequest) {
         quote = createdQuote
       }
     } else {
-      const { data: createdQuote } = await supabase
+      const { data: createdQuote, error: createError } = await supabase
         .from('Quote')
         .insert({
+          id: currentQuoteId,
           assureId: assureId,
           quoteReference: `DEVIS-${Date.now()}`,
           status: 'pending',
@@ -124,6 +140,17 @@ export async function POST(request: NextRequest) {
         })
         .select()
         .single()
+
+      if (createError) {
+        console.error('Erreur création devis:', createError);
+        throw createError;
+      }
+      
+      if (!createdQuote) {
+        throw new Error('Le devis n\'a pas été créé mais aucune erreur retournée');
+      }
+      
+      console.log('Devis créé avec succès:', createdQuote);
       quote = createdQuote
     }
 

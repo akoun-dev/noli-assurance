@@ -4,9 +4,11 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import next from 'next';
 
-const dev = process.env.NODE_ENV !== 'production';
+const dev = true; // Force development mode
 const currentPort = 3000;
 const hostname = '0.0.0.0';
+
+console.log('Starting server in development mode');
 
 // Custom server with Socket.IO integration
 async function createCustomServer() {

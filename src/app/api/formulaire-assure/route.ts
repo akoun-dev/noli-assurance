@@ -33,11 +33,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Générer un ID unique
+    const { v4: uuidv4 } = await import('uuid');
+    const assureId = uuidv4();
+
+    console.log('Enregistrement assure avec ID:', assureId);
+    
     // Créer ou mettre à jour l'assuré dans la base de données
     const { data: assure, error } = await supabase
       .from('assures')
       .upsert(
         {
+          id: assureId,
           nom,
           prenom,
           email,
