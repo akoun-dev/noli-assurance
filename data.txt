@@ -1,0 +1,16 @@
+Les comptes de test ont été créés avec succès :
+
+Admin:
+    Email: admin@demo.com
+    Mot de passe: Admin123!
+    Rôle: ADMIN
+
+Client standard:
+    Email: client@demo.com
+    Mot de passe: Client123!
+    Rôle: USER
+
+Client VIP:
+    Email: vip@demo.com
+    Mot de passe: Vip123!
+    Rôle: USER

@@ -17,19 +17,30 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Mot de passe", type: "password" }
       },
       async authorize(credentials) {
+        console.log('Tentative de connexion avec:', credentials?.email);
+        
         if (!credentials?.email || !credentials?.password) {
-          return null
+          console.log('Email ou mot de passe manquant');
+          return null;
         }
 
         const { data: user, error } = await supabase
           .from("users")
-          .select("*")
+          .select("id, email, password, role, prenom, nom, telephone")
           .eq("email", credentials.email)
-          .single()
+          .maybeSingle()
 
-        if (error || !user) {
-          return null
+        if (error) {
+          console.error('Erreur Supabase:', error);
+          return null;
         }
+
+        if (!user) {
+          console.log('Utilisateur non trouvé');
+          return null;
+        }
+
+        console.log('Utilisateur trouvé:', user.email);
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
@@ -37,8 +48,11 @@ export const authOptions: NextAuthOptions = {
         )
 
         if (!isPasswordValid) {
-          return null
+          console.log('Mot de passe invalide');
+          return null;
         }
+
+        console.log('Authentification réussie pour:', user.email);
 
         return {
           id: user.id,
