@@ -429,6 +429,8 @@ export default function Home() {
               </Card>
             </motion.div>
           </div>
+
+          
         </div>
       </section>
     </div>
