@@ -10,6 +10,8 @@ declare module "next-auth" {
       nom: string
       telephone: string
       role: string
+      twoFactorEnabled: boolean
+      twoFactorVerified: boolean
     }
   }
 
@@ -21,6 +23,7 @@ declare module "next-auth" {
     nom: string
     telephone: string
     role: string
+    twoFactorEnabled?: boolean
   }
 }
 
@@ -31,5 +34,7 @@ declare module "next-auth/jwt" {
     nom: string
     telephone: string
     role: string
+    twoFactorEnabled: boolean
+    twoFactorVerified: boolean
   }
 }

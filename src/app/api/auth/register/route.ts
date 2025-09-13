@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
 import bcrypt from 'bcryptjs'
 import { validateRegister } from '@/lib/validations'
+import { logRegistrationAttempt, logSuccessfulRegistration, logSuspiciousActivity } from '@/lib/auth-logger'
 
 export async function POST(request: NextRequest) {
   try {

@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { SupabaseAdapter } from "@auth/supabase-adapter"
 import { supabase } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
+import { logLoginAttempt, logSuccessfulLogin, logError } from './auth-logger'
 
 export const authOptions = {
   // ✅ Adapter Supabase activé
@@ -46,7 +47,7 @@ export const authOptions = {
         console.log('Utilisateur trouvé:', user.email);
 
         const isPasswordValid = await bcrypt.compare(
-          credentials.password,
+          credentials.password as string,
           user.password as string
         )
 
@@ -73,12 +74,14 @@ export const authOptions = {
     strategy: "jwt"
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.prenom = user.prenom
         token.nom = user.nom
         token.telephone = user.telephone
         token.role = user.role
+        token.twoFactorEnabled = user.twoFactorEnabled || false
+        token.twoFactorVerified = false
       }
       return token
     },
@@ -89,8 +92,23 @@ export const authOptions = {
         session.user.nom = token.nom as string
         session.user.telephone = token.telephone as string
         session.user.role = token.role as string
+        session.user.twoFactorEnabled = token.twoFactorEnabled as boolean
+        session.user.twoFactorVerified = token.twoFactorVerified as boolean
       }
       return session
+    },
+    async signIn({ user, account, credentials }) {
+      // Vérifier si l'utilisateur a le 2FA activé
+      if (user && credentials) {
+        const { get2FAStatus } = await import('./2fa')
+        const twoFactorStatus = await get2FAStatus(user.id)
+        
+        if (twoFactorStatus.isEnabled) {
+          // Rediriger vers la page de vérification 2FA
+          return '/verify-2fa?userId=' + user.id
+        }
+      }
+      return true
     }
   },
   pages: {
