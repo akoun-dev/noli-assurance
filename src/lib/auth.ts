@@ -1,14 +1,17 @@
-import { NextAuthOptions } from "next-auth"
+import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { SupabaseAdapter } from "@auth/supabase-adapter"
 import { supabase } from "@/lib/supabase"
 import bcrypt from "bcryptjs"
 
-export const authOptions: NextAuthOptions = {
-  // Temporarily disable adapter for debugging
-  // adapter: SupabaseAdapter(supabase) as any,
+export const authOptions = {
+  // ✅ Adapter Supabase activé
+  adapter: SupabaseAdapter({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  }),
   secret: process.env.NEXTAUTH_SECRET || "votre-secret-par-defaut-a-changer-en-production",
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -44,7 +47,7 @@ export const authOptions: NextAuthOptions = {
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
-          user.password || ""
+          user.password as string
         )
 
         if (!isPasswordValid) {

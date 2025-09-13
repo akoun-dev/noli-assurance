@@ -1,97 +1,70 @@
-import { withAuth } from "next-auth/middleware"
-import { NextResponse } from "next/server"
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export default withAuth(
-  function middleware(req) {
-    const { pathname } = req.nextUrl
-    const token = req.nextauth.token
+// Rate limiting simple en mémoire (pour la production, utiliser Redis)
+const rateLimit = new Map<string, { count: number; lastReset: number }>()
 
-    // Si l'utilisateur est connecté et essaie d'accéder aux pages d'authentification
-    if (token && (pathname === '/connexion' || pathname === '/inscription')) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000 // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 100 // max 100 requêtes par fenêtre
 
-    // Vérifier les accès selon les rôles
-    if (token) {
-      const userRole = token.role as string
-      
-      // Pages administrateur - uniquement accessible par les admins
-      if (pathname.startsWith('/admin') || pathname === '/utilisateurs' || pathname === '/assureurs' || pathname === '/offres-admin' || pathname === '/devis-admin' || pathname === '/logs') {
-        if (userRole !== 'ADMIN') {
-          return NextResponse.redirect(new URL('/dashboard', req.url))
-        }
-      }
-      
-      // Pages assureur - accessible par les assureurs et les admins
-      if (pathname.startsWith('/assureur') || pathname === '/offres' || pathname === '/devis-recus' || pathname === '/statistiques') {
-        if (userRole !== 'INSURER' && userRole !== 'ADMIN') {
-          return NextResponse.redirect(new URL('/dashboard', req.url))
-        }
-      }
-      
-      // Pages utilisateur - accessibles par tous les utilisateurs connectés
-      if (pathname === '/comparateur' || pathname === '/devis' || pathname === '/profil') {
-        // Tous les rôles peuvent accéder à ces pages
-      }
-    }
-
+export function middleware(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || 
+             request.headers.get('x-real-ip') || 
+             request.headers.get('cf-connecting-ip') || 
+             'unknown'
+  const url = request.nextUrl.pathname
+  
+  // Skip rate limiting for static assets and health check
+  if (url.startsWith('/_next') || url.startsWith('/api/health')) {
     return NextResponse.next()
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl
-        
-        // Pages publiques (accessibles sans authentification)
-        const publicPaths = ['/', '/connexion', '/inscription', '/api/auth', '/resultats', '/formulaire-assure', '/formulaire-vehicule', '/formulaire-options']
-        
-        // Vérifier si le chemin actuel est public
-        const isPublicPath = publicPaths.some(path => 
-          pathname === path || pathname.startsWith(path)
+  }
+
+  // Rate limiting pour les API
+  if (url.startsWith('/api/')) {
+    const now = Date.now()
+    const userLimit = rateLimit.get(ip)
+    
+    if (!userLimit || now - userLimit.lastReset > RATE_LIMIT_WINDOW) {
+      rateLimit.set(ip, { count: 1, lastReset: now })
+    } else {
+      userLimit.count++
+      if (userLimit.count > RATE_LIMIT_MAX_REQUESTS) {
+        return new NextResponse(
+          JSON.stringify({ error: 'Too many requests' }),
+          { 
+            status: 429,
+            headers: { 'Content-Type': 'application/json' }
+          }
         )
-        
-        // Si c'est une page publique, autoriser l'accès
-        if (isPublicPath) {
-          return true
-        }
-        
-        // Le dashboard et ses sous-pages nécessitent une authentification
-        if (pathname.startsWith('/dashboard')) {
-          return !!token
-        }
-        
-        // Pages protégées qui nécessitent une authentification
-        const protectedPaths = [
-          '/comparateur', '/devis', '/profil', '/parametres',
-          '/offres', '/devis-recus', '/statistiques',
-          '/utilisateurs', '/assureurs', '/offres-admin', '/devis-admin', '/logs',
-          '/admin', '/assureur'
-        ]
-        
-        const isProtectedPath = protectedPaths.some(path => 
-          pathname === path || pathname.startsWith(path)
-        )
-        
-        if (isProtectedPath) {
-          return !!token
-        }
-        
-        // Pour les autres pages, autoriser l'accès
-        return true
       }
     }
   }
-)
+
+  // Security headers
+  const response = NextResponse.next()
+  
+  // Ajouter des en-têtes de sécurité
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  
+  // CSP (Content Security Policy)
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:;"
+  )
+
+  // Protection contre le clickjacking
+  if (url.includes('/admin') || url.includes('/dashboard')) {
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN')
+  }
+
+  return response
+}
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
 }

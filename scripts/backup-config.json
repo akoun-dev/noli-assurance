@@ -1,0 +1,97 @@
+{
+  "backup": {
+    "directory": "./backups",
+    "retentionDays": 30,
+    "compressionLevel": 6,
+    "schedule": "0 2 * * *",
+    "enabled": true
+  },
+  "database": {
+    "excludeTables": [
+      "_prisma_migrations",
+      "schema_migrations"
+    ],
+    "includeData": true,
+    "includeSchema": true
+  },
+  "storage": {
+    "includeBuckets": [
+      "documents",
+      "images",
+      "avatars"
+    ],
+    "excludePatterns": [
+      "*.tmp",
+      "*.temp",
+      "node_modules/**"
+    ]
+  },
+  "notifications": {
+    "email": {
+      "enabled": true,
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "secure": false,
+        "auth": {
+          "user": "",
+          "pass": ""
+        }
+      },
+      "from": "backup@noli-assurance.com",
+      "to": [
+        "admin@noli-assurance.com",
+        "tech@noli-assurance.com"
+      ],
+      "subject": "[Backup] Rapport de sauvegarde",
+      "onSuccess": true,
+      "onFailure": true
+    },
+    "slack": {
+      "enabled": false,
+      "webhookUrl": "",
+      "channel": "#backups"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "file": "./logs/backup.log",
+    "maxSize": "10MB",
+    "maxFiles": 5
+  },
+  "security": {
+    "encryptBackups": false,
+    "encryptionKey": "",
+    "requireAuth": true
+  },
+  "monitoring": {
+    "healthCheck": {
+      "enabled": true,
+      "interval": "1h",
+      "maxAge": "24h"
+    },
+    "metrics": {
+      "enabled": true,
+      "port": 9090
+    }
+  },
+  "restore": {
+    "autoVerify": true,
+    "createRestorePoint": true,
+    "maxConcurrentRestores": 1
+  },
+  "cloud": {
+    "enabled": false,
+    "provider": "s3",
+    "config": {
+      "bucket": "",
+      "region": "",
+      "accessKey": "",
+      "secretKey": ""
+    },
+    "sync": {
+      "enabled": false,
+      "interval": "6h"
+    }
+  }
+}

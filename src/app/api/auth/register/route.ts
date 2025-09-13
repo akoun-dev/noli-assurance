@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import supabase from '@/lib/supabase'
 import bcrypt from 'bcryptjs'
+import { validateRegister } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
   try {
-    const { nom, prenom, email, telephone, password, role = 'USER' } = await request.json()
-
-    if (!nom || !prenom || !email || !telephone || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Tous les champs sont obligatoires' },
-        { status: 400 }
-      )
-    }
+    const body = await request.json()
+    
+    // Validation des données d'entrée avec Zod
+    const validatedData = validateRegister(body)
+    const { nom, prenom, email, telephone, password, role = 'USER' } = validatedData
 
     const { data: existingUserByEmail } = await supabase
       .from('users')
@@ -69,6 +67,18 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error during registration:', error)
+    
+    // Gestion des erreurs de validation
+    if (error instanceof Error) {
+      if (error.message.includes('Validation inscription:')) {
+        return NextResponse.json(
+          { success: false, error: error.message.replace('Validation inscription: ', '') },
+          { status: 400 }
+        )
+      }
+    }
+    
+    // Erreur générique pour éviter de divulguer des informations sensibles
     return NextResponse.json(
       { success: false, error: "Une erreur est survenue lors de l'inscription" },
       { status: 500 }

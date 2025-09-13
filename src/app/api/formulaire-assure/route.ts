@@ -1,37 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateAssure } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    const { nom, prenom, email, telephone, isWhatsApp } = body
-
-    // Validation des données
-    if (!nom || !prenom || !email || !telephone) {
-      return NextResponse.json(
-        { error: 'Tous les champs obligatoires doivent être remplis' },
-        { status: 400 }
-      )
-    }
-
-    // Validation de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'L\'email n\'est pas valide' },
-        { status: 400 }
-      )
-    }
-
-    // Validation du numéro de téléphone
-    const phoneRegex = /^[\d\s\+\-\(\)]+$/
-    if (!phoneRegex.test(telephone)) {
-      return NextResponse.json(
-        { error: 'Le numéro de téléphone n\'est pas valide' },
-        { status: 400 }
-      )
-    }
+    // Validation des données avec Zod
+    const validatedData = validateAssure(body)
+    const { nom, prenom, email, telephone, isWhatsApp } = validatedData
 
     // Générer un ID unique
     const { v4: uuidv4 } = await import('uuid');
@@ -76,6 +53,18 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Erreur lors de l\'enregistrement de l\'assuré:', error)
+    
+    // Gestion spécifique des erreurs de validation
+    if (error instanceof Error) {
+      if (error.message.includes('Validation assuré:')) {
+        return NextResponse.json(
+          { error: error.message.replace('Validation assuré: ', '') },
+          { status: 400 }
+        )
+      }
+    }
+    
+    // Erreur générique pour éviter de divulguer des informations sensibles
     return NextResponse.json(
       { error: 'Une erreur est survenue lors de l\'enregistrement' },
       { status: 500 }

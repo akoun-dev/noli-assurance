@@ -14,3 +14,6 @@ Client VIP:
     Email: vip@demo.com
     Mot de passe: Vip123!
     Rôle: USER
+
+
+
