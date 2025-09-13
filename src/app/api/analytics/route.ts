@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { v4 as uuidv4 } from 'uuid'
 
 interface AnalyticsEvent {
   eventType: 'page_view' | 'cta_click' | 'form_start' | 'form_complete' | 'quote_request' | 'contact_request'
@@ -18,10 +19,11 @@ export async function POST(request: NextRequest) {
     const { data: analyticsEvent, error } = await supabase
       .from('UserAnalytics')
       .insert({
+        id: uuidv4(),
         eventType,
         eventData: eventData ? JSON.stringify(eventData) : null,
         userId: userId || null,
-        ipAddress: ipAddress || request.ip || null,
+        ipAddress: ipAddress || null,
         userAgent: userAgent || request.headers.get('user-agent') || null
       })
       .select()

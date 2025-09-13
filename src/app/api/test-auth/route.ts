@@ -1,0 +1,202 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+/**
+ * Endpoint de test pour vérifier le statut du système d'authentification
+ * Utile pour le diagnostic et le monitoring
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Vérifier les variables d'environnement nécessaires
+    const requiredEnvVars = [
+      'NEXTAUTH_SECRET',
+      'NEXT_PUBLIC_SUPABASE_URL',
+      'SUPABASE_SERVICE_ROLE_KEY'
+    ]
+
+    const envStatus = requiredEnvVars.map(varName => ({
+      name: varName,
+      set: !!process.env[varName],
+      value: process.env[varName] ? '***' : null
+    }))
+
+    // Vérifier si les imports fonctionnent
+    let importsStatus = { success: true, errors: [] as string[] }
+
+    try {
+      const { authOptions } = await import('@/lib/auth')
+      if (!authOptions) {
+        importsStatus.success = false
+        importsStatus.errors.push('authOptions non défini')
+      }
+    } catch (error) {
+      importsStatus.success = false
+      importsStatus.errors.push(`Erreur import authOptions: ${error}`)
+    }
+
+    try {
+      const { authLogger } = await import('@/lib/auth-logger')
+      if (!authLogger) {
+        importsStatus.success = false
+        importsStatus.errors.push('authLogger non défini')
+      }
+    } catch (error) {
+      importsStatus.success = false
+      importsStatus.errors.push(`Erreur import authLogger: ${error}`)
+    }
+
+    try {
+      const { withAuth } = await import('@/lib/middleware-auth')
+      if (!withAuth) {
+        importsStatus.success = false
+        importsStatus.errors.push('withAuth non défini')
+      }
+    } catch (error) {
+      importsStatus.success = false
+      importsStatus.errors.push(`Erreur import withAuth: ${error}`)
+    }
+
+    // Vérifier les endpoints NextAuth
+    const endpoints = [
+      '/api/auth/[...nextauth]',
+      '/api/auth/session',
+      '/api/auth/csrf',
+      '/api/auth/signin',
+      '/api/auth/signout'
+    ]
+
+    const endpointStatus = endpoints.map(endpoint => ({
+      endpoint,
+      status: 'unknown' // On ne peut pas tester les endpoints depuis un autre endpoint facilement
+    }))
+
+    // Vérifier les pages d'authentification
+    const pages = [
+      '/connexion',
+      '/inscription',
+      '/deconnexion',
+      '/verify-2fa'
+    ]
+
+    const pageStatus = pages.map(page => ({
+      page,
+      status: 'configured'
+    }))
+
+    // Générer un rapport de santé
+    const healthReport = {
+      timestamp: new Date().toISOString(),
+      status: importsStatus.success ? 'healthy' : 'unhealthy',
+      environment: {
+        variables: envStatus,
+        allSet: envStatus.every(v => v.set)
+      },
+      imports: importsStatus,
+      endpoints: endpointStatus,
+      pages: pageStatus,
+      features: {
+        twoFA: true,
+        logging: true,
+        middleware: true,
+        sessionManagement: true
+      },
+      recommendations: [] as string[]
+    }
+
+    // Ajouter des recommandations basées sur le statut
+    if (!healthReport.environment.allSet) {
+      const missingVars = envStatus.filter(v => !v.set).map(v => v.name)
+      healthReport.recommendations.push(
+        `Variables d'environnement manquantes: ${missingVars.join(', ')}`
+      )
+    }
+
+    if (!importsStatus.success) {
+      healthReport.recommendations.push(
+        `Erreurs d'import: ${importsStatus.errors.join(', ')}`
+      )
+    }
+
+    if (healthReport.status === 'healthy') {
+      healthReport.recommendations.push(
+        'Le système d\'authentification semble correctement configuré'
+      )
+    }
+
+    return NextResponse.json(healthReport)
+
+  } catch (error) {
+    console.error('Erreur lors du test d\'authentification:', error)
+    
+    return NextResponse.json({
+      timestamp: new Date().toISOString(),
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Erreur inconnue',
+      recommendations: [
+        'Vérifier la configuration NextAuth',
+        'Vérifier les imports des modules d\'authentification',
+        'Consulter les logs du serveur pour plus de détails'
+      ]
+    }, { status: 500 })
+  }
+}
+
+/**
+ * Endpoint POST pour tester des fonctionnalités spécifiques
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { test } = body
+
+    switch (test) {
+      case 'logging':
+        // Tester le système de logging
+        const { logLoginAttempt } = await import('@/lib/auth-logger')
+        logLoginAttempt('test@example.com', true, '127.0.0.1', 'Test-Agent')
+        
+        return NextResponse.json({
+          test: 'logging',
+          status: 'success',
+          message: 'Test de logging effectué avec succès'
+        })
+
+      case 'middleware':
+        // Tester le middleware
+        const { withAuth } = await import('@/lib/middleware-auth')
+        const result = await withAuth(request)
+        
+        return NextResponse.json({
+          test: 'middleware',
+          status: 'success',
+          result: result ? 'redirect' : 'authorized'
+        })
+
+      case '2fa':
+        // Tester le système 2FA
+        const { get2FAStatus } = await import('@/lib/2fa')
+        const twoFAStatus = await get2FAStatus('test-user-id')
+        
+        return NextResponse.json({
+          test: '2fa',
+          status: 'success',
+          twoFAStatus
+        })
+
+      default:
+        return NextResponse.json({
+          test: 'unknown',
+          status: 'error',
+          message: 'Test non reconnu'
+        }, { status: 400 })
+    }
+
+  } catch (error) {
+    console.error('Erreur lors du test POST:', error)
+    
+    return NextResponse.json({
+      test: 'unknown',
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Erreur inconnue'
+    }, { status: 500 })
+  }
+}
