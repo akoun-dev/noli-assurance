@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/providers/SessionProvider";
-import "@/lib/sentry"; // Importer Sentry pour l'activer
+import { initSentry } from "@/lib/sentry";
+
+// Initialiser Sentry côté client
+if (typeof window !== 'undefined') {
+  initSentry();
+}
 
 export const metadata: Metadata = {
   title: "NOLI - Assurance",

@@ -1,78 +1,66 @@
-import * as Sentry from '@sentry/nextjs'
+import * as Sentry from "@sentry/nextjs";
 
-// Initialisation de Sentry pour le monitoring des erreurs et des performances
-Sentry.init({
-  dsn: process.env.SENTRY_DSN || '', // Sera configuré via les variables d'environnement
-  environment: process.env.NODE_ENV || 'development',
-  
-  // Définir le taux d'échantillonnage des erreurs
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-  
-  // Configuration simple sans Replay pour éviter les erreurs de compatibilité
-  // Le Replay peut être activé plus tard si nécessaire
-  
-  // Configuration des filtres pour ignorer certaines erreurs
-  beforeSend(event) {
-    // Ignorer les erreurs de développement en production
-    if (process.env.NODE_ENV === 'production' && event.request?.url?.includes('localhost')) {
-      return null
-    }
-    
-    // Ignorer les erreurs de console
-    if (event.request?.url?.includes('console')) {
-      return null
-    }
-    
-    return event
-  },
-})
+export function initSentry() {
+  if (process.env.NODE_ENV === 'production') {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.SENTRY_ENVIRONMENT || 'production',
+      tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+      profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0.1'),
+      beforeSend(event) {
+        // Filtrer les erreurs sensibles
+        if (event.request?.url?.includes('/api/auth')) {
+          event.request.headers = {
+            ...event.request.headers,
+            authorization: '[Filtered]',
+          };
+        }
+        return event;
+      },
+    });
+  } else {
+    // Configuration pour le développement
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.SENTRY_ENVIRONMENT || 'development',
+      tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '1.0'),
+      profilesSampleRate: parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE || '1.0'),
+      debug: true,
+    });
+  }
+}
 
-// Fonction utilitaire pour capturer les erreurs manuellement
-export const captureError = (error: Error, context?: any) => {
+export function captureException(error: Error, context?: Record<string, any>) {
   Sentry.captureException(error, {
     extra: context,
     tags: {
-      page: typeof window !== 'undefined' ? window.location.pathname : 'server',
+      component: 'noli-assurance',
+      version: process.env.npm_package_version || '1.0.0',
     },
-  })
+  });
 }
 
-// Fonction utilitaire pour capturer les messages
-export const captureMessage = (message: string, level: Sentry.SeverityLevel = 'info') => {
-  Sentry.captureMessage(message, level)
+export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info') {
+  Sentry.captureMessage(message, {
+    level,
+    tags: {
+      component: 'noli-assurance',
+      version: process.env.npm_package_version || '1.0.0',
+    },
+  });
 }
 
-// Fonction utilitaire pour définir le contexte utilisateur
-export const setUserContext = (user: any) => {
-  Sentry.withScope((scope) => {
-    scope.setUser({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    })
-  })
+export function setUserContext(user: { id: string; email: string; role: string }) {
+  Sentry.setUser({
+    id: user.id,
+    email: user.email,
+    role: user.role,
+  });
 }
 
-// Fonction utilitaire pour effacer le contexte utilisateur
-export const clearUserContext = () => {
-  Sentry.withScope((scope) => {
-    scope.setUser(null)
-  })
+export function clearUserContext() {
+  Sentry.setUser(null);
 }
 
-// Fonction utilitaire pour ajouter des tags
-export const addTags = (tags: Record<string, string>) => {
-  Sentry.withScope((scope) => {
-    scope.setTags(tags)
-  })
-}
-
-// Fonction utilitaire pour ajouter des extra context
-export const addExtraContext = (context: Record<string, any>) => {
-  Sentry.withScope((scope) => {
-    scope.setExtras(context)
-  })
-}
-
-export default Sentry
+// Exporter le client Sentry pour un accès direct si nécessaire
+export { Sentry };
