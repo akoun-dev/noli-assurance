@@ -286,7 +286,8 @@ const authOptions = {
     signIn: "/connexion",
     newUser: "/inscription"
   },
-  debug: process.env.NODE_ENV === "development"
+  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET || "your-secret-key-here"
 }
 
 export { authOptions }
