@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Users, Building2, FileText, TrendingUp, Shield, Settings, UserCheck, UserX, Plus, Edit, Trash2, Filter } from "lucide-react"
 import { useSession } from "next-auth/react"
+import { RoleGuard } from "@/components/auth/RoleGuard"
 
 interface User {
   id: string
@@ -56,10 +57,6 @@ export default function AdminDashboard() {
   })
 
   useEffect(() => {
-    if (session?.user?.role !== 'ADMIN') {
-      window.location.href = '/'
-      return
-    }
     fetchData()
   }, [session])
 
@@ -148,7 +145,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <RoleGuard requiredRole="ADMIN">
+      <div className="min-h-screen bg-background p-4">
       <motion.div 
         className="max-w-7xl mx-auto"
         variants={containerVariants}
@@ -431,6 +429,7 @@ export default function AdminDashboard() {
           </Tabs>
         </motion.div>
       </motion.div>
-    </div>
+      </div>
+    </RoleGuard>
   )
 }
