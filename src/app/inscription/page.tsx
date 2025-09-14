@@ -19,8 +19,7 @@ export default function InscriptionPage() {
     email: '',
     telephone: '',
     password: '',
-    confirmPassword: '',
-    role: 'USER'
+    confirmPassword: ''
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -36,12 +35,6 @@ export default function InscriptionPage() {
     }))
   }
 
-  const handleRoleChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      role: value
-    }))
-  }
 
   const validateForm = () => {
     if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone || !formData.password) {
@@ -99,7 +92,7 @@ export default function InscriptionPage() {
           email: formData.email,
           telephone: formData.telephone,
           password: formData.password,
-          role: formData.role
+          role: 'USER' // Toujours assigner le rôle USER
         }),
       })
 
@@ -140,11 +133,7 @@ export default function InscriptionPage() {
     visible: { 
       opacity: 1, 
       y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.5,
-        ease: "easeOut"
-      }
+      scale: 1
     }
   }
 
@@ -301,21 +290,6 @@ export default function InscriptionPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="role" className="text-sm font-medium text-gray-700">
-                    Type de compte
-                  </Label>
-                  <Select value={formData.role} onValueChange={handleRoleChange}>
-                    <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
-                      <SelectValue placeholder="Sélectionnez un type de compte" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USER">Utilisateur</SelectItem>
-                      <SelectItem value="INSURER">Assureur</SelectItem>
-                      <SelectItem value="ADMIN">Administrateur</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
