@@ -57,3 +57,43 @@ export async function logActivity({
     // Ne pas lever d'erreur pour ne pas bloquer le flux principal
   }
 }
+
+export interface AdminActionLogParams {
+  userId: string
+  userEmail?: string
+  action: string
+  target?: string
+  success?: boolean
+  errorMessage?: string
+  details?: Record<string, any>
+  request?: NextRequest
+}
+
+export async function logAdminAction({
+  userId,
+  userEmail,
+  action,
+  target,
+  success = true,
+  errorMessage,
+  details,
+  request
+}: AdminActionLogParams): Promise<void> {
+  try {
+    console.log(`[ADMIN ACTION]`, {
+      timestamp: new Date().toISOString(),
+      userId,
+      userEmail,
+      action,
+      target,
+      success,
+      errorMessage,
+      details,
+      ip: request?.headers.get('x-forwarded-for') || 'unknown',
+      userAgent: request?.headers.get('user-agent') || 'unknown'
+    })
+    // Optionally persist to DB (Supabase) here if needed.
+  } catch (error) {
+    console.error('Error logging admin action:', error)
+  }
+}
