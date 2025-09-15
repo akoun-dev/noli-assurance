@@ -95,6 +95,8 @@ async function main() {
   }
 
   // Prepare insurers data
+  const insurerPassword = await hash('Assureur@2024!', 12)
+  
   const insurersData = [
     // NSIA Assurance
     {
@@ -104,7 +106,7 @@ async function main() {
         telephone: '+2252720252025',
         nom: 'NSIA',
         prenom: 'Assurance',
-        password: await hash('Nsia@2023', 12),
+        password: insurerPassword,
         role: 'INSURER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -143,7 +145,7 @@ async function main() {
         telephone: '+2252721212121',
         nom: 'SUNU',
         prenom: 'Assurance',
-        password: await hash('Sunu@2023', 12),
+        password: insurerPassword,
         role: 'INSURER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -182,7 +184,7 @@ async function main() {
         telephone: '+2252727303030',
         nom: 'Allianz',
         prenom: 'CI',
-        password: await hash('Allianz@2023', 12),
+        password: insurerPassword,
         role: 'INSURER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -220,7 +222,7 @@ async function main() {
         telephone: '+2252722151515',
         nom: 'Colina',
         prenom: 'Assurances',
-        password: await hash('Colina@2023', 12),
+        password: insurerPassword,
         role: 'INSURER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -258,7 +260,7 @@ async function main() {
         telephone: '+2252720181818',
         nom: 'AXA',
         prenom: 'Assurances',
-        password: await hash('Axa@2023', 12),
+        password: insurerPassword,
         role: 'INSURER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -297,7 +299,7 @@ async function main() {
         telephone: '+2252725121212',
         nom: 'Saham',
         prenom: 'Assurance',
-        password: await hash('Saham@2023', 12),
+        password: insurerPassword,
         role: 'INSURER',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -441,7 +443,15 @@ async function main() {
   if (assuresError) throw assuresError
 
   console.log('Supabase database seeded successfully!')
-  console.log('Admin: admin@demo.com / password123')
+  console.log('Admin: admin@demo.com / Admin123!')
+  console.log('Assureurs: Tous les assureurs utilisent le mot de passe: Assureur@2024!')
+  console.log('Exemples:')
+  console.log('- NSIA: contact@nsia.ci / Assureur@2024!')
+  console.log('- SUNU: contact@sunu-assurance.ci / Assureur@2024!')
+  console.log('- Allianz: contact@allianz.ci / Assureur@2024!')
+  console.log('- Colina: contact@colina.ci / Assureur@2024!')
+  console.log('- AXA: contact@axa.ci / Assureur@2024!')
+  console.log('- Saham: contact@saham.ci / Assureur@2024!')
 
   // Verify inserted data
   console.log('\nVerifying inserted data...')
@@ -476,4 +486,3 @@ main().catch((e) => {
   console.error(e)
   process.exit(1)
 })
-

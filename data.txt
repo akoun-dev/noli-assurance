@@ -15,5 +15,12 @@ Client VIP:
     Mot de passe: Vip123!
     Rôle: USER
 
-
-
+Admin: admin@demo.com / Admin123!
+Assureurs: Tous les assureurs utilisent le mot de passe: Assureur@2024!
+Exemples:
+- NSIA: contact@nsia.ci / Assureur@2024!
+- SUNU: contact@sunu-assurance.ci / Assureur@2024!
+- Allianz: contact@allianz.ci / Assureur@2024!
+- Colina: contact@colina.ci / Assureur@2024!
+- AXA: contact@axa.ci / Assureur@2024!
+- Saham: contact@saham.ci / Assureur@2024!

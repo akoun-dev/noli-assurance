@@ -48,7 +48,7 @@ SELECT
     u2fa.enabled_at,
     u2fa.last_used_at,
     u2fa.backup_codes,
-    u2fa.created_at as 2fa_created_at
+    u2fa.created_at as two_fa_created_at
 FROM "users" u
 LEFT JOIN "user_2fa" u2fa ON u.id = u2fa.user_id
 WHERE u2fa.is_enabled = true;
