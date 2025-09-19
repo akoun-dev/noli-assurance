@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     }))
 
     // Vérifier si les imports fonctionnent
-    let importsStatus = { success: true, errors: [] as string[] }
+    let importsStatus = { success: true, errors: [] as string[], warnings: [] as string[] }
 
     try {
       const { authOptions } = await import('@/lib/auth')
@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const { authLogger } = await import('@/lib/auth-logger')
-      if (!authLogger) {
+      const { logAdminAction, logActivity } = await import('@/lib/auth-logger')
+      if (!logAdminAction || !logActivity) {
         importsStatus.success = false
-        importsStatus.errors.push('authLogger non défini')
+        importsStatus.errors.push('authLogger functions non définies')
       }
     } catch (error) {
       importsStatus.success = false
@@ -45,14 +45,10 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const { withAuth } = await import('@/lib/middleware-auth')
-      if (!withAuth) {
-        importsStatus.success = false
-        importsStatus.errors.push('withAuth non défini')
-      }
+      // Skip middleware-auth test since we consolidated it into main middleware
+      importsStatus.warnings.push('middleware-auth a été consolidé dans le middleware principal')
     } catch (error) {
-      importsStatus.success = false
-      importsStatus.errors.push(`Erreur import withAuth: ${error}`)
+      importsStatus.warnings.push(`middleware-auth a été consolidé dans le middleware principal`)
     }
 
     // Vérifier les endpoints NextAuth
@@ -152,7 +148,7 @@ export async function POST(request: NextRequest) {
       case 'logging':
         // Tester le système de logging
         const { logLoginAttempt } = await import('@/lib/auth-logger')
-        logLoginAttempt('test@example.com', true, '127.0.0.1', 'Test-Agent')
+        logLoginAttempt('test@example.com', true, { headers: { get: (name: string) => name === 'x-forwarded-for' ? '127.0.0.1' : 'Test-Agent' } } as any)
         
         return NextResponse.json({
           test: 'logging',
@@ -161,14 +157,12 @@ export async function POST(request: NextRequest) {
         })
 
       case 'middleware':
-        // Tester le middleware
-        const { withAuth } = await import('@/lib/middleware-auth')
-        const result = await withAuth(request)
-        
+        // Tester le middleware (consolidé dans le middleware principal)
         return NextResponse.json({
           test: 'middleware',
           status: 'success',
-          result: result ? 'redirect' : 'authorized'
+          result: 'middleware consolidé dans le middleware principal',
+          note: 'Le middleware a été consolidé dans le fichier middleware.ts principal'
         })
 
       case '2fa':

@@ -42,7 +42,7 @@ async function createDemoUsers() {
             nom: 'Demo',
             prenom: 'Assureur',
             password: hashedPassword,
-            role: 'INSURER'
+            role: 'ASSUREUR'
           },
           { onConflict: 'email' }
         )

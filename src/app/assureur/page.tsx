@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, FileText, TrendingUp, Users, Plus, Edit, Trash2, Eye, DollarSign, Target } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Building2, FileText, TrendingUp, Users, Plus, Edit, Trash2, Eye, DollarSign, Target, AlertCircle, RefreshCw, User, Mail, Phone, Calendar, Settings, Shield, MapPin } from "lucide-react"
 import { useSession } from "next-auth/react"
+import { useAssureurError, AssureurErrorDisplay } from "@/lib/assureur-error-handling.tsx"
 
 interface InsuranceOffer {
   id: string
@@ -52,9 +54,11 @@ interface Stats {
 
 export default function InsurerDashboard() {
   const { data: session } = useSession()
+  const { getErrorMessage, handleError } = useAssureurError()
   const [offers, setOffers] = useState<InsuranceOffer[]>([])
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<Stats>({
     totalOffers: 0,
     activeOffers: 0,
@@ -64,7 +68,7 @@ export default function InsurerDashboard() {
   })
 
   useEffect(() => {
-    if (session?.user?.role !== 'INSURER') {
+    if (session?.user?.role !== 'ASSUREUR') {
       window.location.href = '/'
       return
     }
@@ -73,35 +77,49 @@ export default function InsurerDashboard() {
 
   const fetchData = async () => {
     try {
+      setError(null)
       const [offersRes, quotesRes] = await Promise.all([
         fetch('/api/insurer/offers'),
         fetch('/api/insurer/quotes')
       ])
 
+      if (!offersRes.ok || !quotesRes.ok) {
+        throw new Error('Erreur de communication avec le serveur')
+      }
+
       const offersData = await offersRes.json()
       const quotesData = await quotesRes.json()
 
-      if (offersData.success) setOffers(offersData.offers)
-      if (quotesData.success) setQuotes(quotesData.quotes)
+      if (!offersData.success) {
+        throw new Error(offersData.error || 'Erreur lors de la récupération des offres')
+      }
+      if (!quotesData.success) {
+        throw new Error(quotesData.error || 'Erreur lors de la récupération des devis')
+      }
+
+      setOffers(offersData.offers || [])
+      setQuotes(quotesData.quotes || [])
 
       // Calculate stats
-      const activeOffers = offersData.offers?.filter((o: InsuranceOffer) => o.isActive)?.length || 0
-      const convertedQuotes = quotesData.quotes?.filter((q: Quote) => q.status === 'converted')?.length || 0
-      const totalRevenue = quotesData.quotes
-        ?.filter((q: Quote) => q.status === 'converted')
-        ?.reduce((sum: number, q: Quote) => {
+      const activeOffers = (offersData.offers || []).filter((o: InsuranceOffer) => o.isActive).length
+      const convertedQuotes = (quotesData.quotes || []).filter((q: Quote) => q.status === 'converted').length
+      const totalRevenue = (quotesData.quotes || [])
+        .filter((q: Quote) => q.status === 'converted')
+        .reduce((sum: number, q: Quote) => {
           const selectedOffer = q.quoteOffers?.find(qo => qo.offer)
           return sum + (selectedOffer?.priceAtQuote || 0)
-        }, 0) || 0
+        }, 0)
 
       setStats({
-        totalOffers: offersData.offers?.length || 0,
+        totalOffers: (offersData.offers || []).length,
         activeOffers,
-        totalQuotes: quotesData.quotes?.length || 0,
+        totalQuotes: (quotesData.quotes || []).length,
         convertedQuotes,
         totalRevenue
       })
     } catch (error) {
+      const errorMessage = getErrorMessage(error)
+      setError(errorMessage)
       console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
@@ -164,7 +182,7 @@ export default function InsurerDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
-      <motion.div 
+      <motion.div
         className="max-w-7xl mx-auto"
         variants={containerVariants}
         initial="hidden"
@@ -185,6 +203,16 @@ export default function InsurerDashboard() {
             </div>
           </div>
         </motion.div>
+
+        {/* Error Display */}
+        {error && (
+          <motion.div className="mb-6" variants={itemVariants}>
+            <AssureurErrorDisplay
+              error={error}
+              onRetry={fetchData}
+            />
+          </motion.div>
+        )}
 
         {/* Stats Cards - Responsive */}
         <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8" variants={itemVariants}>
@@ -251,9 +279,10 @@ export default function InsurerDashboard() {
         {/* Main Content */}
         <motion.div variants={itemVariants}>
           <Tabs defaultValue="offers" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-2">
               <TabsTrigger value="offers">Mes offres</TabsTrigger>
               <TabsTrigger value="quotes">Devis reçus</TabsTrigger>
+              <TabsTrigger value="profile">Mon profil</TabsTrigger>
             </TabsList>
 
             <TabsContent value="offers">
@@ -398,6 +427,107 @@ export default function InsurerDashboard() {
                       })}
                     </TableBody>
                   </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="profile">
+              <Card className="border-0 shadow-lg bg-white">
+                <CardHeader>
+                  <CardTitle>Mon profil assureur</CardTitle>
+                  <CardDescription>Gérez vos informations professionnelles</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Building2 className="h-12 w-12 text-blue-600" />
+                      </div>
+                      <Badge className="bg-blue-100 text-blue-800">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Assureur
+                      </Badge>
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">Nom de l'entreprise</Label>
+                          <div className="flex items-center space-x-2">
+                            <Building2 className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-900">Assurance NOLI</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">Email professionnel</Label>
+                          <div className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-900">{session?.user?.email}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">Téléphone</Label>
+                          <div className="flex items-center space-x-2">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-900">+225 01 23 45 67 89</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">Adresse</Label>
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-900">Abidjan, Cocody</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-sm font-medium text-gray-700">Compte créé le</Label>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Calendar className="h-4 w-4 text-gray-400" />
+                              <span className="text-gray-600">{new Date().toLocaleDateString('fr-FR')}</span>
+                            </div>
+                          </div>
+                          <Button>
+                            <Settings className="h-4 w-4 mr-2" />
+                            Modifier le profil
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                    <Card className="border border-gray-200">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-600">Offres actives</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-blue-600">{stats.activeOffers}</div>
+                        <p className="text-xs text-gray-600">Total disponible</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="border border-gray-200">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-600">Devis convertis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-green-600">{stats.convertedQuotes}</div>
+                        <p className="text-xs text-gray-600">Ce mois-ci</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="border border-gray-200">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-600">Taux de conversion</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-purple-600">
+                          {stats.totalQuotes > 0 ? Math.round((stats.convertedQuotes / stats.totalQuotes) * 100) : 0}%
+                        </div>
+                        <p className="text-xs text-gray-600">Performance</p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

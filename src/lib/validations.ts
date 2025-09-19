@@ -33,6 +33,7 @@ export const AssureSchema = z.object({
   email: z.string().email('Email invalide'),
   telephone: z.string()
     .regex(/^[0-9]{10}$/, 'Le numéro de téléphone doit contenir 10 chiffres'),
+  isWhatsApp: z.boolean().default(false),
   adresse: z.string().min(10, 'L\'adresse doit contenir au moins 10 caractères').max(200, 'L\'adresse est trop longue'),
   dateNaissance: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format de date invalide (YYYY-MM-DD)'),
   lieuNaissance: z.string().min(2, 'Le lieu de naissance est requis').max(50, 'Le lieu de naissance est trop long'),

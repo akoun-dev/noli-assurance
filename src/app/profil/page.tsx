@@ -118,7 +118,7 @@ export default function ProfilPage() {
     switch (role) {
       case 'ADMIN':
         return <Badge variant="destructive" className="bg-red-600">Administrateur</Badge>
-      case 'INSURER':
+      case 'ASSUREUR':
         return <Badge variant="default" className="bg-blue-600">Assureur</Badge>
       default:
         return <Badge variant="secondary">Utilisateur</Badge>
@@ -129,7 +129,7 @@ export default function ProfilPage() {
     switch (role) {
       case 'ADMIN':
         return <Settings className="h-5 w-5" />
-      case 'INSURER':
+      case 'ASSUREUR':
         return <Building2 className="h-5 w-5" />
       default:
         return <User className="h-5 w-5" />
@@ -172,7 +172,7 @@ export default function ProfilPage() {
           </Card>
         )
 
-      case 'INSURER':
+      case 'ASSUREUR':
         return (
           <Card>
             <CardHeader>

@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { requireAdminAuthAPI, requireAdminErrorNextResponse } from '@/lib/admin-auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    const authResult = await requireAdminAuthAPI()
+    if (authResult.response) {
+      return authResult.response
     }
 
-    const userRole = session.user.role
+    const session = authResult.session
 
     // Définition des types
     type MonthlyStat = {
@@ -160,47 +160,36 @@ export async function GET(request: NextRequest) {
       return topOffers
     }
 
-    switch (userRole) {
-      case 'USER':
-      case 'INSURER':
-      case 'ADMIN':
-        const commonStats = await getCommonStats()
-        
-        if (userRole === 'ADMIN') {
-          const [totalUsersRes, activeInsurersRes, lastMonthUsersRes] = await Promise.all([
-            supabase.from('users').select('*', { count: 'exact', head: true }),
-            supabase
-              .from('InsuranceOffer')
-              .select('*', { count: 'exact', head: true })
-              .eq('isActive', true),
-            supabase
-              .from('users')
-              .select('*', { count: 'exact', head: true })
-              .gte(
-                'createdAt',
-                new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString()
-              )
-          ])
-          const totalUsers = totalUsersRes.count || 0
-          const activeInsurers = activeInsurersRes.count || 0
-          const lastMonthUsers = lastMonthUsersRes.count || 0
-          
-          return NextResponse.json({
-            ...commonStats,
-            stats: {
-              ...commonStats.stats,
-              totalUsers,
-              activeInsurers,
-              lastMonthUsers
-            }
-          })
-        }
-        
-        return NextResponse.json(commonStats)
+    // Pour l'admin, on renvoie toujours les statistiques complètes
+    const commonStats = await getCommonStats()
 
-      default:
-        return NextResponse.json({ error: 'Rôle non reconnu' }, { status: 400 })
-    }
+    const [totalUsersRes, activeInsurersRes, lastMonthUsersRes] = await Promise.all([
+      supabase.from('users').select('*', { count: 'exact', head: true }),
+      supabase
+        .from('insurers')
+        .select('*', { count: 'exact', head: true })
+        .eq('statut', 'ACTIF'),
+      supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .gte(
+          'createdAt',
+          new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString()
+        )
+    ])
+    const totalUsers = totalUsersRes.count || 0
+    const activeInsurers = activeInsurersRes.count || 0
+    const lastMonthUsers = lastMonthUsersRes.count || 0
+
+    return NextResponse.json({
+      ...commonStats,
+      stats: {
+        ...commonStats.stats,
+        totalUsers,
+        activeInsurers,
+        lastMonthUsers
+      }
+    })
   } catch (error) {
     console.error('Erreur lors de la récupération des stats du dashboard:', error)
     return NextResponse.json(

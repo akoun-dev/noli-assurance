@@ -580,7 +580,7 @@ export default function DashboardPage() {
 
   // Rendu conditionnel selon le rôle
   switch (userRole) {
-    case 'INSURER':
+    case 'ASSUREUR':
       return renderInsurerDashboard()
     case 'ADMIN':
       return renderAdminDashboard()

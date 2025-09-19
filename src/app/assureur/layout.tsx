@@ -15,7 +15,7 @@ export default function AssureurLayout({
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session || session.user.role !== 'INSURER') {
+    if (!session || session.user.role !== 'ASSUREUR') {
       router.push('/connexion')
     }
   }, [status, session, router])
@@ -28,7 +28,7 @@ export default function AssureurLayout({
     )
   }
 
-  if (!session || session.user.role !== 'INSURER') {
+  if (!session || session.user.role !== 'ASSUREUR') {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="text-center max-w-md">
@@ -39,7 +39,7 @@ export default function AssureurLayout({
           </div>
           <h1 className="text-2xl font-bold mb-4">Accès non autorisé</h1>
           <p className="text-gray-600 mb-6">Vous devez être assureur pour accéder à cette page.</p>
-          <button 
+          <button
             onClick={() => router.push('/connexion')}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium w-full sm:w-auto"
           >

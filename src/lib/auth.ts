@@ -1,7 +1,14 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-import { UserRole } from "@prisma/client"
+import { createClient } from "@supabase/supabase-js"
+import { logAuthenticationEvent, logSecurityEvent } from "./monitoring"
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+)
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,48 +23,92 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        // Simulation d'une base de données pour la démo
-        // Dans une vraie application, vous utiliseriez Prisma ou un autre ORM
-        const users = [
-          {
-            id: "1",
-            email: "assureur@example.com",
-            password: await bcrypt.hash("password123", 10),
-            name: "Assureur Test",
-            role: "INSURER" as UserRole,
-            image: null
-          },
-          {
-            id: "2", 
-            email: "client@example.com",
-            password: await bcrypt.hash("password123", 10),
-            name: "Client Test",
-            role: "CLIENT" as UserRole,
-            image: null
+        try {
+          // Récupérer l'utilisateur depuis la base de données
+          const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', credentials.email)
+            .single()
+
+          if (error || !user) {
+            console.error('Erreur lors de la recherche de l\'utilisateur:', error)
+
+            // Logger l'échec de connexion
+            await logAuthenticationEvent({
+              eventType: 'LOGIN_FAILURE',
+              email: credentials.email,
+              ipAddress: 'unknown', // Serait récupéré depuis la requête dans une implémentation complète
+              userAgent: 'unknown',
+              success: false,
+              failureReason: 'USER_NOT_FOUND'
+            })
+
+            return null
           }
-        ]
 
-        const user = users.find(u => u.email === credentials.email)
+          // Vérifier si l'utilisateur a un mot de passe
+          if (!user.password) {
+            console.error('L\'utilisateur n\'a pas de mot de passe défini')
+            return null
+          }
 
-        if (!user) {
+          // Vérifier le mot de passe
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          )
+
+          if (!isPasswordValid) {
+            console.error('Mot de passe incorrect')
+
+            // Logger l'échec de connexion
+            await logAuthenticationEvent({
+              eventType: 'LOGIN_FAILURE',
+              email: credentials.email,
+              ipAddress: 'unknown',
+              userAgent: 'unknown',
+              success: false,
+              failureReason: 'INVALID_PASSWORD'
+            })
+
+            return null
+          }
+
+          // Vérifier si le 2FA est activé
+          const { data: twoFactor } = await supabase
+            .from('user_2fa')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_enabled', true)
+            .single()
+
+          // Logger la connexion réussie
+          await logAuthenticationEvent({
+            eventType: 'LOGIN_SUCCESS',
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+            ipAddress: 'unknown',
+            userAgent: 'unknown',
+            success: true,
+            twoFactorEnabled: !!twoFactor
+          })
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: `${user.prenom} ${user.nom}`,
+            prenom: user.prenom,
+            nom: user.nom,
+            telephone: user.telephone,
+            role: user.role,
+            twoFactorEnabled: !!twoFactor,
+            twoFactorVerified: false,
+          }
+        } catch (error) {
+          console.error('Erreur lors de l\'authentification:', error)
           return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          image: user.image,
         }
       }
     })
@@ -69,18 +120,22 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role
+        token.twoFactorEnabled = user.twoFactorEnabled || false
+        token.twoFactorVerified = user.twoFactorVerified || false
       }
       return token
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.sub!
-        session.user.role = token.role as UserRole
+        session.user.role = token.role as string
+        session.user.twoFactorEnabled = token.twoFactorEnabled as boolean
+        session.user.twoFactorVerified = token.twoFactorVerified as boolean
       }
       return session
     }
   },
   pages: {
-    signIn: "/auth/signin",
+    signIn: "/connexion",
   }
 }

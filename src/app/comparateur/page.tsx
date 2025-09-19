@@ -16,6 +16,7 @@ import { ArrowLeft, ArrowRight, Shield, Car, Settings, Info, User, Building, Pho
 import Link from "next/link"
 import { UserProfile } from "@/components/UserProfile"
 import { useSession } from "next-auth/react"
+import { useToast } from "@/hooks/use-toast"
 
 type FormData = {
   // Étape 1: Profil conducteur
@@ -57,6 +58,7 @@ const optionsAssurance = [
 
 export default function ComparateurPage() {
   const { data: session } = useSession()
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<FormData>({
     nom: '',
@@ -170,11 +172,19 @@ export default function ComparateurPage() {
         // Rediriger vers la page de résultats
         window.location.href = '/resultats'
       } else {
-        alert('Une erreur est survenue lors de la comparaison')
+        toast({
+          title: "Erreur de comparaison",
+          description: "Une erreur est survenue lors de la comparaison",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Error submitting form:', error)
-      alert('Une erreur est survenue lors de la soumission du formulaire')
+      toast({
+        title: "Erreur de soumission",
+        description: "Une erreur est survenue lors de la soumission du formulaire",
+        variant: "destructive",
+      })
     }
   }
 

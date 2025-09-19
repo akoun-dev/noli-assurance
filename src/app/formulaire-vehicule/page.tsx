@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Shield, ArrowRight, ArrowLeft, Car, Calendar, DollarSign } from "lucide-react"
 import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
 
 export default function FormulaireVehicule() {
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     energie: '',
     puissanceFiscale: '',
@@ -138,16 +140,28 @@ export default function FormulaireVehicule() {
             const errorData = await response.json()
             const errorMessage = errorData.error || errorData.message || 'Une erreur est survenue lors de l\'enregistrement'
             console.error('Erreur:', errorMessage)
-            alert(errorMessage)
+            toast({
+              title: "Erreur",
+              description: errorMessage,
+              variant: "destructive",
+            })
           } catch {
             // Si la réponse n'est pas du JSON valide
             console.error('Erreur de réponse:', response.status, response.statusText)
-            alert('Une erreur de réseau est survenue. Veuillez réessayer.')
+            toast({
+              title: "Erreur réseau",
+              description: "Une erreur de réseau est survenue. Veuillez réessayer.",
+              variant: "destructive",
+            })
           }
         }
       } catch (error) {
         console.error('Erreur de réseau:', error)
-        alert('Une erreur de réseau est survenue')
+        toast({
+          title: "Erreur réseau",
+          description: "Une erreur de réseau est survenue",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }

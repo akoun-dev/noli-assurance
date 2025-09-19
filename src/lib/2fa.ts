@@ -256,7 +256,7 @@ export class TwoFactorManager {
 
       const { error } = await supabase
         .from('user_2fa')
-        .update({ backup_codes })
+        .update({ backup_codes: backupCodes })
         .eq('user_id', userId)
 
       if (error) {

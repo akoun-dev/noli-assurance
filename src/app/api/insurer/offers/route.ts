@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user?.role !== "INSURER") {
+    if (!session || session.user?.role !== "ASSUREUR") {
       return NextResponse.json(
         { success: false, error: "Accès non autorisé" },
         { status: 401 },

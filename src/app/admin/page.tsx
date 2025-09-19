@@ -49,6 +49,7 @@ export default function AdminDashboard() {
   const [insurers, setInsurers] = useState<Insurer[]>([])
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalInsurers: 0,
@@ -62,6 +63,9 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
+      setLoading(true)
+      setError(null)
+
       const [usersRes, insurersRes, quotesRes] = await Promise.all([
         fetch('/api/admin/users'),
         fetch('/api/admin/insurers'),
@@ -72,19 +76,20 @@ export default function AdminDashboard() {
       const insurersData = await insurersRes.json()
       const quotesData = await quotesRes.json()
 
-      if (usersData.success) setUsers(usersData.users)
-      if (insurersData.success) setInsurers(insurersData.insurers)
-      if (quotesData.success) setQuotes(quotesData.quotes)
+      if (usersData.success) setUsers(usersData.data || usersData.users || [])
+      if (insurersData.success) setInsurers(insurersData.data || insurersData.insurers || [])
+      if (quotesData.success) setQuotes(quotesData.data || quotesData.quotes || [])
 
       // Calculate stats
       setStats({
-        totalUsers: usersData.users?.length || 0,
-        totalInsurers: insurersData.insurers?.length || 0,
-        totalQuotes: quotesData.quotes?.length || 0,
-        activeQuotes: quotesData.quotes?.filter((q: Quote) => q.status !== 'converted')?.length || 0
+        totalUsers: usersData.data?.length || usersData.users?.length || 0,
+        totalInsurers: insurersData.data?.length || insurersData.insurers?.length || 0,
+        totalQuotes: quotesData.data?.length || quotesData.quotes?.length || 0,
+        activeQuotes: (quotesData.data || quotesData.quotes || []).filter((q: Quote) => q.status !== 'converted').length
       })
     } catch (error) {
       console.error('Error fetching data:', error)
+      setError('Erreur lors du chargement des données')
     } finally {
       setLoading(false)
     }
@@ -93,7 +98,7 @@ export default function AdminDashboard() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'ADMIN': return 'bg-red-100 text-red-800'
-      case 'INSURER': return 'bg-blue-100 text-blue-800'
+      case 'ASSUREUR': return 'bg-blue-100 text-blue-800'
       case 'USER': return 'bg-green-100 text-green-800'
       default: return 'bg-gray-100 text-gray-800'
     }
@@ -101,11 +106,84 @@ export default function AdminDashboard() {
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'sent': return 'bg-blue-100 text-blue-800'
-      case 'contacted': return 'bg-purple-100 text-purple-800'
-      case 'converted': return 'bg-green-100 text-green-800'
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800'
+      case 'PROCESSING': return 'bg-blue-100 text-blue-800'
+      case 'REVIEW': return 'bg-purple-100 text-purple-800'
+      case 'ACCEPTED': return 'bg-green-100 text-green-800'
+      case 'CONVERTED': return 'bg-green-100 text-green-800'
+      case 'REJECTED': return 'bg-red-100 text-red-800'
+      case 'EXPIRED': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE'
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setUsers(prev => prev.filter(user => user.id !== userId))
+        setStats(prev => ({ ...prev, totalUsers: prev.totalUsers - 1 }))
+      } else {
+        alert(result.error || 'Erreur lors de la suppression')
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      alert('Erreur lors de la suppression')
+    }
+  }
+
+  const handleDeleteInsurer = async (insurerId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet assureur ?')) return
+
+    try {
+      const response = await fetch(`/api/admin/insurers/${insurerId}`, {
+        method: 'DELETE'
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setInsurers(prev => prev.filter(insurer => insurer.id !== insurerId))
+        setStats(prev => ({ ...prev, totalInsurers: prev.totalInsurers - 1 }))
+      } else {
+        alert(result.error || 'Erreur lors de la suppression')
+      }
+    } catch (error) {
+      console.error('Error deleting insurer:', error)
+      alert('Erreur lors de la suppression')
+    }
+  }
+
+  const handleDeleteQuote = async (quoteId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce devis ?')) return
+
+    try {
+      const response = await fetch(`/api/admin/quotes/${quoteId}`, {
+        method: 'DELETE'
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setQuotes(prev => prev.filter(quote => quote.id !== quoteId))
+        setStats(prev => ({
+          ...prev,
+          totalQuotes: prev.totalQuotes - 1,
+          activeQuotes: prev.activeQuotes - 1
+        }))
+      } else {
+        alert(result.error || 'Erreur lors de la suppression')
+      }
+    } catch (error) {
+      console.error('Error deleting quote:', error)
+      alert('Erreur lors de la suppression')
     }
   }
 
@@ -284,10 +362,16 @@ export default function AdminDashboard() {
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
                               <div className="flex space-x-1">
-                                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                <Button variant="outline" size="sm" className="h-8 w-8 p-0" title="Modifier">
                                   <Edit className="h-3.5 w-3.5" />
                                 </Button>
-                                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
+                                  title="Supprimer"
+                                  onClick={() => handleDeleteUser(user.id)}
+                                >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
@@ -352,10 +436,16 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" title="Modifier">
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="outline" size="sm">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800"
+                                title="Supprimer"
+                                onClick={() => handleDeleteInsurer(insurer.id)}
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -411,11 +501,20 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" title="Voir les détails">
                                 <FileText className="h-4 w-4" />
                               </Button>
-                              <Button variant="outline" size="sm">
+                              <Button variant="outline" size="sm" title="Modifier">
                                 <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800"
+                                title="Supprimer"
+                                onClick={() => handleDeleteQuote(quote.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>

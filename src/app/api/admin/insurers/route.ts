@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import bcrypt from 'bcryptjs'
+import { requireAdminAuthAPI, requireAdminErrorNextResponse } from '@/lib/admin-auth'
+import { sanitizeInsurerData, sanitizeId } from '@/lib/input-sanitization'
 
 interface CreateInsurerData {
   nom: string
@@ -23,34 +25,16 @@ interface CreateInsurerData {
 
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier la session et les droits admin
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, message: 'Accès non autorisé' },
-        { status: 401 }
-      )
+    const authResult = await requireAdminAuthAPI()
+    if (authResult.response) {
+      return authResult.response
     }
 
-    // Récupérer les données du formulaire
-    const data: CreateInsurerData = await request.json()
+    const session = authResult.session
 
-    // Valider les données requises
-    const requiredFields = [
-      'nom', 'prenom', 'email', 'telephone', 'nomEntreprise', 
-      'adresseEntreprise', 'siegeSocial', 'numeroRegistre', 'numeroAgrement',
-      'domaineActivite', 'anneeExperience', 'nombreEmployes'
-    ]
-
-    for (const field of requiredFields) {
-      if (!data[field as keyof CreateInsurerData] || data[field as keyof CreateInsurerData].trim() === '') {
-        return NextResponse.json(
-          { success: false, message: `Le champ ${field} est requis` },
-          { status: 400 }
-        )
-      }
-    }
+    // Récupérer et nettoyer les données du formulaire
+    const rawData: CreateInsurerData = await request.json()
+    const data = sanitizeInsurerData(rawData)
 
     // Vérifier si l'email existe déjà
     const { data: existingUser } = await supabase
@@ -92,7 +76,7 @@ export async function POST(request: NextRequest) {
         nom: data.nom,
         prenom: data.prenom,
         password: hashedPassword,
-        role: 'INSURER',
+        role: 'ASSUREUR',
         telephone: data.telephone,
         emailVerified: new Date()
       })
@@ -129,9 +113,8 @@ export async function POST(request: NextRequest) {
 
     if (insurerError) throw insurerError
 
-    // Ici, vous pourriez ajouter l'envoi d'un email avec les identifiants temporaires
-    // Pour l'instant, on retourne le mot de passe temporaire dans la réponse (à enlever en production)
-    console.log(`Nouvel assureur créé: ${data.email}, mot de passe temporaire: ${temporaryPassword}`)
+    // TODO: Implémenter l'envoi d'un email sécurisé avec les identifiants temporaires
+    // Le mot de passe temporaire ne doit jamais être exposé dans les logs ou les réponses API
 
     return NextResponse.json({
       success: true,
@@ -156,15 +139,12 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Vérifier la session et les droits admin
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, message: 'Accès non autorisé' },
-        { status: 401 }
-      )
+    const authResult = await requireAdminAuthAPI()
+    if (authResult.response) {
+      return authResult.response
     }
+
+    const session = authResult.session
 
     // Récupérer tous les assureurs
     const { data: insurers, error } = await supabase

@@ -1,8 +1,20 @@
 
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import supabase from '@/lib/supabase'
+
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Unauthorized access' },
+        { status: 401 }
+      )
+    }
+
     const { data: quotes, error } = await supabase
       .from('Quote')
       .select('id, quoteReference, telephone, energie, puissanceFiscale, status, createdAt, user(*), assure(*), quoteOffers(selected, priceAtQuote, offer(*, insurer(*)))')

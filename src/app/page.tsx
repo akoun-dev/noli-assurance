@@ -39,7 +39,19 @@ export default function Home() {
 
   useEffect(() => {
     if (session && status === 'authenticated') {
-      router.push('/dashboard')
+      switch (session.user.role) {
+        case 'USER':
+          router.push('/mes-devis')
+          break
+        case 'ADMIN':
+          router.push('/admin')
+          break
+        case 'ASSUREUR':
+          router.push('/dashboard')
+          break
+        default:
+          router.push('/mes-devis')
+      }
     }
   }, [session, status, router])
 

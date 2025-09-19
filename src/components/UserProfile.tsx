@@ -1,7 +1,13 @@
 'use client'
 
 import { useSession, signOut } from 'next-auth/react'
-import { motion } from 'framer-motion'
+import dynamic from 'next/dynamic'
+
+// Import dynamique de Framer Motion pour optimiser le bundle
+const MotionDiv = dynamic(
+  () => import('framer-motion').then((mod) => mod.motion.div),
+  { ssr: false, loading: () => <div /> }
+)
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -68,7 +74,7 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'ADMIN': return 'bg-red-100 text-red-800'
-      case 'INSURER': return 'bg-blue-100 text-blue-800'
+      case 'ASSUREUR': return 'bg-blue-100 text-blue-800'
       case 'USER': return 'bg-green-100 text-green-800'
       default: return 'bg-gray-100 text-gray-800'
     }
@@ -77,7 +83,7 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'ADMIN': return <Shield className="h-4 w-4" />
-      case 'INSURER': return <Building2 className="h-4 w-4" />
+      case 'ASSUREUR': return <Building2 className="h-4 w-4" />
       case 'USER': return <User className="h-4 w-4" />
       default: return <User className="h-4 w-4" />
     }
@@ -98,7 +104,7 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src="" alt={user.name} />
+              <AvatarImage src="" alt={`Photo de profil de ${user.name}`} />
               <AvatarFallback className="bg-blue-600 text-white">
                 {user.name?.charAt(0).toUpperCase()}
               </AvatarFallback>
@@ -151,7 +157,7 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
     return (
       <div className="flex items-center space-x-3">
         <Avatar className="h-8 w-8">
-          <AvatarImage src="" alt={user.name} />
+          <AvatarImage src="" alt={`Photo de profil de ${user.name}`} />
           <AvatarFallback className="bg-blue-600 text-white text-sm">
             {user.name?.charAt(0).toUpperCase()}
           </AvatarFallback>
@@ -176,13 +182,13 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <motion.div
+        <MotionDiv
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="flex items-center space-x-2 cursor-pointer"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src="" alt={user.name} />
+            <AvatarImage src="" alt={`Photo de profil de ${user.name}`} />
             <AvatarFallback className="bg-blue-600 text-white text-sm">
               {user.name?.charAt(0).toUpperCase()}
             </AvatarFallback>
@@ -192,7 +198,7 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
             <p className="text-xs text-gray-600 truncate">{user.email}</p>
           </div>
           <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
-        </motion.div>
+        </MotionDiv>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 sm:w-64">
         <div className="px-2 py-1.5 text-sm text-gray-700">
@@ -204,18 +210,11 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
           </Badge>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard" className="flex items-center">
-            <User className="h-4 w-4 mr-2" />
-            Tableau de bord
-          </Link>
-        </DropdownMenuItem>
-        
         {/* Menu items selon le rôle */}
         {userRole === 'USER' && (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/devis" className="flex items-center">
+              <Link href="/mes-devis" className="flex items-center">
                 <FileText className="h-4 w-4 mr-2" />
                 Mes devis
               </Link>
@@ -235,7 +234,7 @@ export function UserProfile({ variant = 'dropdown' }: UserProfileProps) {
           </>
         )}
         
-        {userRole === 'INSURER' && (
+        {userRole === 'ASSUREUR' && (
           <>
             <DropdownMenuItem asChild>
               <Link href="/dashboard" className="flex items-center">

@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import getServerSession from 'next-auth'
+import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { softDeleteManager } from '@/lib/soft-delete'
+import { requireAdminAuthAPI, requireAdminErrorNextResponse } from '@/lib/admin-auth'
+import { sanitizeId } from '@/lib/input-sanitization'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Accès non autorisé' },
-        { status: 401 }
-      )
+    const authResult = await requireAdminAuthAPI()
+    if (authResult.response) {
+      return authResult.response
     }
+
+    const session = authResult.session
 
     const result = await softDeleteManager.getActive('users', {
       order: { column: 'createdAt', ascending: false }
@@ -45,24 +45,15 @@ export async function GET(request: NextRequest) {
 // DELETE /api/admin/users - Soft delete d'un utilisateur
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Accès non autorisé' },
-        { status: 401 }
-      )
+    const authResult = await requireAdminAuthAPI()
+    if (authResult.response) {
+      return authResult.response
     }
+
+    const session = authResult.session
 
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'ID utilisateur requis' },
-        { status: 400 }
-      )
-    }
+    const userId = sanitizeId(searchParams.get('userId'))
 
     const result = await softDeleteManager.softDelete('users', userId)
 

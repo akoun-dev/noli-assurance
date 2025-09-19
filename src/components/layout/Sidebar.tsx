@@ -64,78 +64,81 @@ export function Sidebar({ className }: SidebarProps) {
         icon: User,
       },
     ],
-    INSURER: [
+    ASSUREUR: [
       {
         title: 'Tableau de bord',
-        href: '/dashboard',
+        href: '/assureur',
         icon: Home,
       },
       {
         title: 'Mes Offres',
-        href: '/offres',
+        href: '/assureur?tab=offers',
         icon: Car,
       },
       {
-        title: 'Statistiques',
-        href: '/statistiques',
-        icon: BarChart3,
-      },
-      {
         title: 'Devis Reçus',
-        href: '/devis-recus',
+        href: '/assureur?tab=quotes',
         icon: FileBarChart,
       },
       {
         title: 'Mon Profil',
-        href: '/profil',
+        href: '/assureur?tab=profile',
         icon: User,
       },
     ],
     ADMIN: [
       {
         title: 'Tableau de bord',
-        href: '/dashboard',
+        href: '/admin',
         icon: Home,
       },
       {
         title: 'Utilisateurs',
-        href: '/utilisateurs',
+        href: '/admin?tab=users',
         icon: Users,
       },
       {
         title: 'Assureurs',
-        href: '/assureurs',
+        href: '/admin?tab=insurers',
         icon: Building2,
       },
       {
         title: 'Statistiques',
-        href: '/statistiques',
+        href: '/admin?tab=stats',
         icon: TrendingUp,
       },
       {
         title: 'Devis',
-        href: '/devis-admin',
+        href: '/admin?tab=quotes',
         icon: FileText,
       },
       {
         title: 'Offres',
-        href: '/offres-admin',
+        href: '/admin?tab=offers',
         icon: Car,
       },
       {
         title: 'Logs Système',
-        href: '/logs',
+        href: '/admin?tab=logs',
         icon: AlertCircle,
       },
       {
         title: 'Paramètres',
-        href: '/parametres',
+        href: '/admin?tab=settings',
         icon: Settings,
       },
     ],
   }
 
   const currentMenuItems = menuItems[userRole as keyof typeof menuItems] || menuItems.USER
+
+  const isActive = (href: string) => {
+    if (href.includes('?tab=')) {
+      const [basePath, tabParam] = href.split('?tab=')
+      return pathname.startsWith(basePath) && pathname.includes(`tab=${tabParam}`)
+    }
+    return pathname === href
+  }
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-white">
@@ -164,7 +167,7 @@ export function Sidebar({ className }: SidebarProps) {
       <ScrollArea className="flex-1 px-3 py-4">
         <div className="space-y-1">
           {currentMenuItems.map((item) => {
-            const isActive = pathname === item.href
+            const active = isActive(item.href)
             return (
               <Link
                 key={item.href}
@@ -172,14 +175,14 @@ export function Sidebar({ className }: SidebarProps) {
                 onClick={closeSidebar}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all hover:bg-gray-100',
-                  isActive
+                  active
                     ? 'bg-slate-800 text-white'
                     : 'text-muted-foreground hover:text-gray-900'
                 )}
               >
                 <item.icon className={cn(
                   "h-5 w-5 flex-shrink-0",
-                  isActive ? "text-white" : "text-gray-600"
+                  active ? "text-white" : "text-gray-600"
                 )} />
                 <span className="truncate font-medium">{item.title}</span>
               </Link>

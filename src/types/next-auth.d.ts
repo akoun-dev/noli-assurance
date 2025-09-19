@@ -24,6 +24,7 @@ declare module "next-auth" {
     telephone: string
     role: string
     twoFactorEnabled?: boolean
+    twoFactorVerified?: boolean
   }
 }
 

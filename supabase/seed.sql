@@ -9,12 +9,12 @@ INSERT INTO "public"."users" ("id", "email", "telephone", "nom", "prenom", "pass
 ('admin_1', 'admin@noli.ci', '+2250700000001', 'Admin', 'NOLI', '$2a$12$xyz123...', 'ADMIN', '1980-01-01', '2000-01-01', NOW()),
 
 -- Insurer users (6 real insurers)
-('insurer_1', 'direction@nsia.ci', '+2250700000002', 'Kouassi', 'Amani', '$2a$12$xyz123...', 'INSURER', '1975-05-15', '1995-06-20', NOW()),
-('insurer_2', 'direction@sunu.ci', '+2250700000003', 'Diallo', 'Fatou', '$2a$12$xyz123...', 'INSURER', '1978-08-25', '1998-09-30', NOW()),
-('insurer_3', 'direction@allianz.ci', '+2250700000004', 'Yao', 'Koffi', '$2a$12$xyz123...', 'INSURER', '1980-03-10', '2000-04-15', NOW()),
-('insurer_4', 'direction@axa.ci', '+2250700000005', 'Bamba', 'Karim', '$2a$12$xyz123...', 'INSURER', '1982-07-20', '2002-08-25', NOW()),
-('insurer_5', 'direction@colina.ci', '+2250700000006', 'Touré', 'Aminata', '$2a$12$xyz123...', 'INSURER', '1976-09-12', '1996-10-18', NOW()),
-('insurer_6', 'direction@saham.ci', '+2250700000007', 'Koné', 'Moussa', '$2a$12$xyz123...', 'INSURER', '1979-11-05', '1999-12-10', NOW()),
+('insurer_1', 'direction@nsia.ci', '+2250700000002', 'Kouassi', 'Amani', '$2a$12$xyz123...', 'ASSUREUR', '1975-05-15', '1995-06-20', NOW()),
+('insurer_2', 'direction@sunu.ci', '+2250700000003', 'Diallo', 'Fatou', '$2a$12$xyz123...', 'ASSUREUR', '1978-08-25', '1998-09-30', NOW()),
+('insurer_3', 'direction@allianz.ci', '+2250700000004', 'Yao', 'Koffi', '$2a$12$xyz123...', 'ASSUREUR', '1980-03-10', '2000-04-15', NOW()),
+('insurer_4', 'direction@axa.ci', '+2250700000005', 'Bamba', 'Karim', '$2a$12$xyz123...', 'ASSUREUR', '1982-07-20', '2002-08-25', NOW()),
+('insurer_5', 'direction@colina.ci', '+2250700000006', 'Touré', 'Aminata', '$2a$12$xyz123...', 'ASSUREUR', '1976-09-12', '1996-10-18', NOW()),
+('insurer_6', 'direction@saham.ci', '+2250700000007', 'Koné', 'Moussa', '$2a$12$xyz123...', 'ASSUREUR', '1979-11-05', '1999-12-10', NOW()),
 
 -- Regular users (3 clients)
 ('user_1', 'client1@noli.ci', '+2250700000008', 'Konan', 'Jean', '$2a$12$xyz123...', 'USER', '1990-03-10', '2012-04-15', NOW()),

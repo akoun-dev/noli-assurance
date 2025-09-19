@@ -1,25 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { 
-  Car, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  ToggleLeft,
-  ToggleRight,
+import { Label } from '@/components/ui/label'
+import {
+  Car,
+  Plus,
+  Edit,
+  Trash2,
   Star,
-  Clock
+  Clock,
+  ToggleRight,
+  ToggleLeft
 } from 'lucide-react'
 
 export default function OffresPage() {
+  const router = useRouter()
+  const { data: session } = useSession()
   const [showCreateForm, setShowCreateForm] = useState(false)
+
+  // Rediriger les utilisateurs ASSUREUR vers l'interface centralisée
+  useEffect(() => {
+    if (session?.user?.role === 'ASSUREUR') {
+      router.replace('/assureur?tab=offers')
+    }
+  }, [session, router])
+
+  // Afficher un état de chargement pendant la redirection
+  if (session?.user?.role === 'ASSUREUR') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirection vers votre tableau de bord...</p>
+        </div>
+      </div>
+    )
+  }
   
   const offres = [
     {

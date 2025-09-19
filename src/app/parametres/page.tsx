@@ -114,7 +114,7 @@ export default function ParametresPage() {
           dataRetention: '90',
           apiAccess: false
         }
-      } else if (userRole === 'INSURER') {
+      } else if (userRole === 'ASSUREUR') {
         roleSpecificSettings.insurerSettings = {
           quoteNotifications: true,
           autoResponse: false,
@@ -306,7 +306,7 @@ export default function ParametresPage() {
           </>
         )
 
-      case 'INSURER':
+      case 'ASSUREUR':
         return (
           <>
             <Card>
@@ -492,7 +492,7 @@ export default function ParametresPage() {
                 Administration
               </Button>
             )}
-            {session?.user?.role === 'INSURER' && (
+            {session?.user?.role === 'ASSUREUR' && (
               <Button variant="ghost" className="w-full justify-start">
                 <Building2 className="h-4 w-4 mr-2" />
                 Assureur

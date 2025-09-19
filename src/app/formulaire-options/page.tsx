@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Shield, ArrowRight, ArrowLeft, Calendar, CheckCircle, Star } from "lucide-react"
 import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
 
 export default function FormulaireOptions() {
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     typeCouverture: '',
     dateEffet: '',
@@ -72,7 +74,11 @@ export default function FormulaireOptions() {
         const healthCheck = await fetch('/api/health')
         if (!healthCheck.ok) {
           console.error('Erreur de connexion au serveur:', healthCheck.status)
-          alert('Le serveur ne répond pas. Veuillez réessayer plus tard.')
+          toast({
+            title: "Erreur serveur",
+            description: "Le serveur ne répond pas. Veuillez réessayer plus tard.",
+            variant: "destructive",
+          })
           return
         }
         
@@ -92,7 +98,11 @@ export default function FormulaireOptions() {
         }
       } catch (error) {
         console.error('Erreur de connexion:', error)
-        alert('Impossible de se connecter au serveur. Vérifiez votre connexion internet.')
+        toast({
+          title: "Erreur de connexion",
+          description: "Impossible de se connecter au serveur. Vérifiez votre connexion internet.",
+          variant: "destructive",
+        })
       }
     }
 
@@ -174,13 +184,21 @@ export default function FormulaireOptions() {
             if (errorData.error?.includes('No record was found for an update')) {
               localStorage.removeItem('quoteId')
               setQuoteId(null)
-              alert('Votre session a expiré. Veuillez recommencer le formulaire.')
+              toast({
+                title: "Session expirée",
+                description: "Votre session a expiré. Veuillez recommencer le formulaire.",
+                variant: "destructive",
+              })
               window.location.href = '/formulaire-assure'
               return
             }
             
             const errorMessage = errorData.error || errorData.message || 'Une erreur est survenue lors de l\'enregistrement'
-            alert(`Erreur ${response.status}: ${errorMessage}`)
+            toast({
+              title: `Erreur ${response.status}`,
+              description: errorMessage,
+              variant: "destructive",
+            })
           } catch (parseError) {
             console.error('Erreur de réponse:', {
               status: response.status,
@@ -188,12 +206,20 @@ export default function FormulaireOptions() {
               url: response.url,
               error: parseError
             })
-            alert(`Erreur ${response.status}: ${response.statusText || 'Une erreur de réseau est survenue. Veuillez réessayer.'}`)
+            toast({
+              title: `Erreur ${response.status}`,
+              description: response.statusText || 'Une erreur de réseau est survenue. Veuillez réessayer.',
+              variant: "destructive",
+            })
           }
         }
       } catch (error) {
         console.error('Erreur de réseau:', error)
-        alert('Une erreur de réseau est survenue')
+        toast({
+          title: "Erreur réseau",
+          description: "Une erreur de réseau est survenue",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }

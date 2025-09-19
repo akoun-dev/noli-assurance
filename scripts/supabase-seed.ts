@@ -107,7 +107,7 @@ async function main() {
         nom: 'NSIA',
         prenom: 'Assurance',
         password: insurerPassword,
-        role: 'INSURER',
+        role: 'ASSUREUR',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -146,7 +146,7 @@ async function main() {
         nom: 'SUNU',
         prenom: 'Assurance',
         password: insurerPassword,
-        role: 'INSURER',
+        role: 'ASSUREUR',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -185,7 +185,7 @@ async function main() {
         nom: 'Allianz',
         prenom: 'CI',
         password: insurerPassword,
-        role: 'INSURER',
+        role: 'ASSUREUR',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -223,7 +223,7 @@ async function main() {
         nom: 'Colina',
         prenom: 'Assurances',
         password: insurerPassword,
-        role: 'INSURER',
+        role: 'ASSUREUR',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -261,7 +261,7 @@ async function main() {
         nom: 'AXA',
         prenom: 'Assurances',
         password: insurerPassword,
-        role: 'INSURER',
+        role: 'ASSUREUR',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -300,7 +300,7 @@ async function main() {
         nom: 'Saham',
         prenom: 'Assurance',
         password: insurerPassword,
-        role: 'INSURER',
+        role: 'ASSUREUR',
         createdAt: new Date(),
         updatedAt: new Date()
       },

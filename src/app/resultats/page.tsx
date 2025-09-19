@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Filter, Star, Shield, Check, Phone, Mail, MessageCircle, Info, X, Heart, Eye, Zap, GitCompare } from "lucide-react"
 import Link from "next/link"
 import { UserProfile } from "@/components/UserProfile"
+import { useToast } from "@/hooks/use-toast"
 
 interface InsuranceOffer {
   id: string
@@ -37,6 +38,7 @@ const filterOptions = {
 }
 
 export default function ResultatsPage() {
+  const { toast } = useToast()
   const [offers, setOffers] = useState<InsuranceOffer[]>([])
   const [filteredOffers, setFilteredOffers] = useState<InsuranceOffer[]>([])
   const [sortBy, setSortBy] = useState<string>('price-asc')
@@ -1059,7 +1061,11 @@ export default function ResultatsPage() {
                     method: 'email', 
                     insurer: selectedOffer?.insurer 
                   })
-                  alert('Vous recevrez un email dans les prochaines minutes avec votre devis.')
+                  toast({
+                    title: "Devis envoyé par email",
+                    description: "Vous recevrez un email dans les prochaines minutes avec votre devis.",
+                    variant: "default",
+                  })
                   setShowContactModal(false)
                 }}
               >
@@ -1078,7 +1084,11 @@ export default function ResultatsPage() {
                     method: 'whatsapp', 
                     insurer: selectedOffer?.insurer 
                   })
-                  alert('Vous recevrez votre devis par WhatsApp dans les prochaines minutes.')
+                  toast({
+                    title: "Devis envoyé par WhatsApp",
+                    description: "Vous recevrez votre devis par WhatsApp dans les prochaines minutes.",
+                    variant: "default",
+                  })
                   setShowContactModal(false)
                 }}
               >
@@ -1097,7 +1107,11 @@ export default function ResultatsPage() {
                     method: 'telephone', 
                     insurer: selectedOffer?.insurer 
                   })
-                  alert('Un conseiller vous contactera dans les 48h pour discuter de votre devis.')
+                  toast({
+                    title: "Conseiller contacté",
+                    description: "Un conseiller vous contactera dans les 48h pour discuter de votre devis.",
+                    variant: "default",
+                  })
                   setShowContactModal(false)
                 }}
               >
